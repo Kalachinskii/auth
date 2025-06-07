@@ -1,9 +1,15 @@
+import { api } from "@/shared/api/axios-instance";
 import { Button } from "@/shared/ui/button";
+import axios from "axios";
 
 export function App() {
-  fetch("http://localhost:4000/")
-    .then((resp) => resp.json())
-    .then((data) => console.log(data));
+  //   fetch("http://localhost:4000/")
+  //     .then((resp) => resp.json())
+  //     .then((data) => console.log(data));
+
+  //   ответ на 1 шаг быстрее
+  //   axios.get("http://localhost:4000/").then((resp) => console.log(resp));
+  api.get("/").then((resp) => console.log(resp));
 
   return (
     <>
