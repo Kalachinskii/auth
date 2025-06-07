@@ -26,6 +26,12 @@ app.get("/", (request, response) => {
   });
 });
 
+app.post("/signin", (request, response) => {
+  console.log(request.body);
+
+  response.json("Signin success");
+});
+
 // будет работать на порте 3000
 app.listen(4000, () => console.log("Сервер запущен"));
 //                  запуск
