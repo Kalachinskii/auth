@@ -2,9 +2,13 @@
 import express from "express";
 // npm i cors
 import cors from "cors";
+// npm i nodemon -D для изменений в реальном времени без перезапуска сервера
+// настроить в пакете.джесон - "server": "nodemon server/server.js"
+// теперь запуск с npm run server
 
 // иницилизация
 const app = express();
+// автоматически парсим входящие JSON-запросы
 app.use(express.json());
 // С какого клиента ловить запросы - origin: "http://localhost:5173"
 // cors() - не воспринемай запросы как чужеродные
