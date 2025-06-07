@@ -3,6 +3,7 @@ import type { IUser } from "../types";
 
 interface IUserRequest extends Pick<IUser, "email" | "password"> {}
 
-export const signin = (data: IUserRequest) => {
-  api.post("/signin", data).then((resp) => console.log(resp.data));
+export const authApi = {
+  signin: (data: IUserRequest) => api.post("/signin", data),
+  signup: (data: IUserRequest) => api.post("/signup", data),
 };

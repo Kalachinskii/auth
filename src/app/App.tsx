@@ -1,4 +1,4 @@
-import { signin } from "@/entities/user/api/auth";
+import { authApi } from "@/entities/user/api/auth";
 import { api } from "@/shared/api/axios-instance";
 import { Button } from "@/shared/ui/button";
 import axios from "axios";
@@ -11,7 +11,7 @@ export function App() {
   //   ответ на 1 шаг быстрее
   //   axios.get("http://localhost:4000/").then((resp) => console.log(resp));
   //   api.get("/").then((resp) => console.log(resp));
-  signin({ email: "test@test.ru", password: "123" });
+  authApi.signin({ email: "test@test.ru", password: "123" });
 
   return (
     <>
