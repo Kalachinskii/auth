@@ -11,7 +11,9 @@ export function App() {
   //   ответ на 1 шаг быстрее
   //   axios.get("http://localhost:4000/").then((resp) => console.log(resp));
   //   api.get("/").then((resp) => console.log(resp));
-  authApi.signin({ email: "test@test.ru", password: "123" });
+  authApi
+    .signin({ email: "test@test.ru", password: "123" })
+    .then((resp) => console.log(resp.data));
 
   return (
     <>
