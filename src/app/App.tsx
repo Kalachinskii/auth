@@ -1,6 +1,10 @@
 import { Button } from "@/shared/ui/button";
 
 export function App() {
+  fetch("http://localhost:4000/")
+    .then((resp) => resp.json())
+    .then((data) => console.log(data));
+
   return (
     <>
       {/* <h1 className="text-3xl font-bold underline">Hello world!</h1> */}
