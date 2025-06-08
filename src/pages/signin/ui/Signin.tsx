@@ -1,5 +1,5 @@
 import { authApi } from "@/entities/user/api/auth";
-import { Button } from "@/shared/ui/button";
+import { SigninForm } from "@/features/auth";
 import { AxiosError } from "axios";
 
 export function Signin() {
@@ -10,5 +10,10 @@ export function Signin() {
       console.log(error.response?.data.error);
     });
 
-  return <h1 className="text-3xl font-bold underline">Signin page</h1>;
+  return (
+    <>
+      <SigninForm />
+      <span>&copy; all rightts res</span>
+    </>
+  );
 }
