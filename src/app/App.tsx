@@ -1,7 +1,8 @@
 import { authApi } from "@/entities/user/api/auth";
 import { api } from "@/shared/api/axios-instance";
 import { Button } from "@/shared/ui/button";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+import { error } from "console";
 
 export function App() {
   //   fetch("http://localhost:4000/")
@@ -12,8 +13,11 @@ export function App() {
   //   axios.get("http://localhost:4000/").then((resp) => console.log(resp));
   //   api.get("/").then((resp) => console.log(resp));
   authApi
-    .signin({ email: "test@test.ru", password: "123" })
-    .then((resp) => console.log(resp.data));
+    .signin({ email: "user@mail.ru", password: "1234" })
+    .then((resp) => console.log(resp.data.message))
+    .catch((error: AxiosError<{ error: string }>) => {
+      console.log(error.response?.data.error);
+    });
 
   return (
     <>
