@@ -12,6 +12,8 @@ import { Input } from "@/shared/ui/input";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
 
 // ZOD константы
 const emaildMin = 5;
@@ -32,9 +34,11 @@ const FormSchema = z.object({
 });
 
 export const SigninForm = () => {
+  const [showPassword, setShowPassword] = useState(false);
   const form = useForm<z.infer<typeof FormSchema>>({
     // установить npm i @hookform/resolvers
     resolver: zodResolver(FormSchema),
+    mode: "onChange", // реал-тайм
   });
 
   const onSubmit = () => {
@@ -47,6 +51,8 @@ export const SigninForm = () => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
+          // space-y-6 вертикальные отступы между элементами
+          // w-2/3 ширина от 100%
           className="w-2/3 space-y-6"
         >
           <FormField
@@ -56,7 +62,7 @@ export const SigninForm = () => {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="shadcn" {...field} />
+                  <Input placeholder="Email" {...field} />
                 </FormControl>
 
                 <FormMessage />
@@ -70,7 +76,25 @@ export const SigninForm = () => {
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input placeholder="shadcn" {...field} />
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Password"
+                      {...field}
+                      className=""
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-2 top-1/2 transform -translate-y1/2 cursor-pointer"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-3 w-3 text-gray-500" />
+                      ) : (
+                        <Eye className="h-3 w-3 text-gray-500" />
+                      )}
+                    </button>
+                  </div>
                 </FormControl>
 
                 <FormMessage />
