@@ -3,6 +3,7 @@ import express from "express";
 // npm i cors
 import cors from "cors";
 import { error } from "console";
+import { PrismaClient } from "@prisma/client";
 // npm i nodemon -D для изменений в реальном времени без перезапуска сервера
 // настроить в пакете.джесон - "server": "nodemon server/server.js"
 // теперь запуск с npm run server
@@ -27,6 +28,9 @@ app.get("/", (request, response) => {
   });
 });
 
+// создаьть экземпляр класса
+const prisma = new PrismaClient();
+
 app.post("/signin", (request, response) => {
   if (!request.body.email || !request.body.password) {
     return response
@@ -49,26 +53,51 @@ app.post("/signin", (request, response) => {
   }
 });
 
-app.post("/signup", (request, response) => {
-  if (!request.body.email || !request.body.password) {
-    return response
-      .status(400)
-      .json({ error: "Вы должны передать email и password" });
+app.post("/signup", async (request, response) => {
+  console.log("SIGNUP");
+
+  // if (!request.body.email || !request.body.password) {
+  //   return response
+  //     .status(400)
+  //     .json({ error: "Вы должны передать email и password" });
+  // }
+  // const { email, password } = request.body;
+
+  const email = "sda@mail.ru";
+  const password = "Asdd12323";
+
+  // const users = [
+  //   { email: "admin@mail.ru", password: "1234" },
+  //   { email: "user@mail.ru", password: "1234" },
+  // ];
+  // const user = users.some(
+  //   (user) => user.email === email && user.password === password
+  // );
+  // if (user) {
+  //   response.status(400).json({ error: "Пользователь существует" });
+  // } else {
+  //   user.push({ email, password });
+  //   response.status(201).json({ message: "Вы успешно зарегистрировались" });
+  // }
+
+  // new user s 0
+  // существует ли пользователь
+  const isUserExist = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
+  if (isUserExist) {
+    return response.status(400).json({ error: "Login is already exist" });
   }
-  const { email, password } = request.body;
-  const users = [
-    { email: "admin@mail.ru", password: "1234" },
-    { email: "user@mail.ru", password: "1234" },
-  ];
-  const user = users.some(
-    (user) => user.email === email && user.password === password
-  );
-  if (user) {
-    response.status(400).json({ error: "Пользователь существует" });
-  } else {
-    user.push({ email, password });
-    response.status(201).json({ message: "Вы успешно зарегистрировались" });
-  }
+  //
+
+  await prisma.user.create({
+    data: {
+      email,
+      password,
+    },
+  });
 });
 
 // будет работать на порте 3000
