@@ -74,6 +74,8 @@ export const FormLayout = ({
   confirmField,
 }: FormLayoutProps) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const form = useForm<FormData>({
     resolver: zodResolver(FormSchema),
     mode: "onChange",
@@ -124,7 +126,7 @@ export const FormLayout = ({
                     <button
                       type="button"
                       className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer"
-                      onClick={() => setShowPassword(!showPassword)} // Переключаем видимость пароля
+                      onClick={() => setShowPassword((prev) => !prev)} // Переключаем видимость пароля
                     >
                       {showPassword ? (
                         <EyeOff className="h-3 w-3 text-gray-500" /> // Иконка "глаз закрыт"
@@ -152,14 +154,14 @@ export const FormLayout = ({
                     <div className="relative">
                       <Input
                         className="border-zinc-500 focus:border-zinс-50 text-zinc-50 pl-9"
-                        type={showPassword ? "text" : "password"} // Переключаем тип поля ввода
+                        type={showConfirmPassword ? "text" : "password"} // Переключаем тип поля ввода
                         placeholder="Confirm password"
                         {...field}
                       />
                       <button
                         type="button"
                         className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer"
-                        onClick={() => setShowPassword(!showPassword)} // Переключаем видимость пароля
+                        onClick={() => setShowConfirmPassword((prev) => !prev)} // Переключаем видимость пароля
                       >
                         {showPassword ? (
                           <EyeOff className="h-3 w-3 text-gray-500" /> // Иконка "глаз закрыт"
