@@ -7,18 +7,14 @@ import { AppLayout } from "./AppLayout";
 
 const router = createBrowserRouter([
   {
-    // path: ROUTES.HOME,
-    // обвертка
     element: <AppLayout />,
     children: [
-      // уточнение путей
       {
         path: ROUTES.HOME,
         element: <Home />,
       },
     ],
   },
-  //   без обвёртки
   {
     path: ROUTES.SIGNIN,
     element: <Signin />,
