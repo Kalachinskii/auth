@@ -61,7 +61,7 @@ const FormSchema = z
   });
 
 interface FormLayoutProps {
-  title: string;
+  buttonTitle: string;
   onSubmit: (data: FormData) => void;
   confirmField?: boolean;
 }
@@ -69,7 +69,7 @@ interface FormLayoutProps {
 type FormData = z.infer<typeof FormSchema>;
 
 export const FormLayout = ({
-  title,
+  buttonTitle,
   onSubmit,
   confirmField,
 }: FormLayoutProps) => {
@@ -188,7 +188,7 @@ export const FormLayout = ({
             className="w-full bg-[#2859FE] py-6 cursor-pointer hover:bg-[#1642d3]"
             type="submit"
           >
-            {title}
+            {buttonTitle}
           </Button>
         </form>
       </Form>
