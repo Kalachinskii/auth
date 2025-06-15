@@ -81,6 +81,13 @@ export const FormLayout = ({
     mode: "onChange",
   });
 
+  // Показывать поле  Confirm password при заполненом валидированном пароле
+  const {
+    watch,
+    formState: { errors },
+  } = form;
+  const isPasswordValid = !errors.password && watch("password");
+
   return (
     <div>
       <Form {...form}>
@@ -141,7 +148,7 @@ export const FormLayout = ({
               </FormItem>
             )}
           />
-          {confirmField && (
+          {confirmField && isPasswordValid && (
             <FormField
               control={form.control}
               name="confirmPassword"
