@@ -5,5 +5,5 @@ export const SigninForm = () => {
     console.log("signin");
   };
 
-  return <FormLayout title="Sign in" onSubmit={signinHandler} />;
+  return <FormLayout buttonTitle="Sign in" onSubmit={signinHandler} />;
 };
