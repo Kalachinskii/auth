@@ -1,12 +1,23 @@
-import { authApi } from "@/entities/user/api/auth";
 import type { AxiosError } from "axios";
+import type { SignupFormSchema } from "./formSchema";
+import type { z } from "zod";
+import { authApi } from "@/entities/user";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "@/shared/router/constants";
+import { toast } from "sonner";
 
 export const useSignup = () => {
-  authApi
-    .signup({ email: "user@mail.ru", password: "1234" })
-    .then((resp) => console.log(resp.data.message))
-    .catch((error: AxiosError<{ error: string }>) => {
-      console.log(error.response?.data.error);
-    });
-  // return {};
+    const navigate = useNavigate();
+
+    const signupHandler = async (data: z.infer<typeof SignupFormSchema>) => {
+        try {
+            throw new Error();
+            await authApi.signup(data);
+            navigate(ROUTES.HOME);
+        } catch (error) {
+            toast.error("Signup fail");
+        }
+    };
+
+    return { signupHandler };
 };
