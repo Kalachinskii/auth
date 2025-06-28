@@ -1,19 +1,17 @@
 import { ROUTES } from "@/shared/router/constants";
 import { FormLayout } from "./layouts/FormLayout";
-import useSignin from "../model/useSignin";
-import { SigninFormSchema, type SigninFormData } from "../types";
+import { SigninFormSchema } from "../model/formSchema";
+import { useSignin } from "../model/useSignin";
+// import { useSignin } from "../model/useSignin";
 
 export const SigninForm = () => {
     const { signinHandler } = useSignin();
-
     return (
         <FormLayout
-            link={{ to: ROUTES.SIGNUP, title: "Sign up" }}
             buttonTitle="Sign in"
             onSubmit={signinHandler}
-            route={ROUTES.SIGNIN}
-            // formSchema={SigninFormSchema}
-            // formData={type SigninFormData}
+            link={{ to: ROUTES.SIGNUP, title: "Sign up" }}
+            schema={SigninFormSchema}
         />
     );
 };

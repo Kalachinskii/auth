@@ -11,20 +11,29 @@ import { Input } from "@/shared/ui/input";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Eye, EyeOff } from "lucide-react";
+
+import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "react-router-dom";
-import { ROUTES } from "@/shared/router/constants";
-import { SigninFormSchema, type SigninFormData } from "../../types";
+import type {
+    SigninFormSchema,
+    SignupFormSchema,
+} from "../../model/formSchema";
+import { Toaster } from "sonner";
 
 interface FormLayoutProps {
     buttonTitle: string;
-    onSubmit: (data: FormData) => void;
+    onSubmit: (
+        data:
+            | z.infer<typeof SigninFormSchema>
+            | z.infer<typeof SignupFormSchema>
+    ) => Promise<void>;
     confirmField?: boolean;
     link: {
         to: string;
         title: string;
     };
-    route: typeof ROUTES.SIGNIN | typeof ROUTES.SIGNUP;
+    schema: typeof SigninFormSchema | typeof SignupFormSchema;
 }
 
 export const FormLayout = ({
@@ -32,13 +41,10 @@ export const FormLayout = ({
     onSubmit,
     confirmField,
     link,
-    route,
+    schema,
 }: FormLayoutProps) => {
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-    const form = useForm<{ route === ROUTES.SIGNIN ? SigninFormData }>({
-        resolver: zodResolver({ formSchema }),
+    const form = useForm<z.infer<typeof schema>>({
+        resolver: zodResolver(schema),
         mode: "onChange",
         defaultValues: {
             email: "",
@@ -47,16 +53,19 @@ export const FormLayout = ({
         },
     });
 
-    // Показывать поле  Confirm password при заполненом валидированном пароле
     const {
         watch,
-        formState: { errors },
+        formState: { errors, isValid },
     } = form;
     const isPasswordValid = !errors.password && watch("password");
+
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     return (
         <div>
             <Form {...form}>
+                <Toaster />
                 <form
                     onSubmit={form.handleSubmit(onSubmit)}
                     className="space-y-6 mb-5"
@@ -74,7 +83,7 @@ export const FormLayout = ({
                                         <Input
                                             placeholder="Email"
                                             {...field}
-                                            className="border-zinc-500 focus:border-zinc-50 text-zinc-50 pl-9"
+                                            className="border-zinc-500 focus:border-zink-50 text-zinc-50 pl-9"
                                         />
                                         <span className="w-5 h-4 bg-[url(https://api.iconify.design/ic:outline-mail.svg?color=%23626060)] bg-no-repeat bg-cover absolute top-2/7 left-2 group-focus-within:bg-[url(https://api.iconify.design/ic:outline-mail.svg?color=%23ffffff)]"></span>
                                     </div>
@@ -107,7 +116,7 @@ export const FormLayout = ({
                                             type="button"
                                             className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer"
                                             onClick={() =>
-                                                setShowPassword((prev) => !prev)
+                                                setShowPassword(!showPassword)
                                             } // Переключаем видимость пароля
                                         >
                                             {showPassword ? (
@@ -149,11 +158,11 @@ export const FormLayout = ({
                                                 className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer"
                                                 onClick={() =>
                                                     setShowConfirmPassword(
-                                                        (prev) => !prev
+                                                        !showConfirmPassword
                                                     )
                                                 } // Переключаем видимость пароля
                                             >
-                                                {showPassword ? (
+                                                {showConfirmPassword ? (
                                                     <EyeOff className="h-3 w-3 text-gray-500" /> // Иконка "глаз закрыт"
                                                 ) : (
                                                     <Eye className="h-3 w-3 text-gray-500" /> // Иконка "глаз открыт"
@@ -184,12 +193,3 @@ export const FormLayout = ({
         </div>
     );
 };
-
-/*const form = useForm<TypeOf<T>>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      ...(confirmField 
-        ? { email: '', password: '', confirmPassword: '' }
-        : { email: '', password: '' }
-    ) as TypeOf<T>,
-  });

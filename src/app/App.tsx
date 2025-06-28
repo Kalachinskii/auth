@@ -1,7 +1,7 @@
 import { AppRouter } from "./AppRouter";
 
 export function App() {
-  return <AppRouter />;
+    return <AppRouter />;
 }
 
 /*
@@ -36,3 +36,5 @@ _______________________________________________________________________
                                 axios
 npm i axios
 */
+
+// npm i --save-dev eslint-import-resolver-typescript vite-tsconfig-paths prettier eslint-plugin-prettier eslint-config-prettier @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-react eslint-plugin-import @types/node
