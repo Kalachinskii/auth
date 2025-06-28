@@ -1,10 +1,10 @@
-import { authApi } from "@/entities/user";
 import { SigninFormSchema } from "./formSchema";
 import type { AxiosError } from "axios";
 import type { z } from "zod";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/shared/router/constants";
 import { toast } from "sonner";
+import { authApi } from "@/entities/user/api/auth";
 
 export const useSignin = () => {
     const navigate = useNavigate();
