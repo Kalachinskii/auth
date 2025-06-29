@@ -12,7 +12,7 @@ export const useSignin = () => {
         console.log("signinHandler");
 
         try {
-            throw new Error();
+            // throw new Error();
             await authApi.signin(data);
             navigate(ROUTES.HOME);
         } catch (error) {
