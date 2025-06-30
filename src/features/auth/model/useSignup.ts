@@ -10,7 +10,10 @@ import * as Cookies from "js-cookie";
 export const useSignup = () => {
     const navigate = useNavigate();
 
-    const signupHandler = async (data: z.infer<typeof SignupFormSchema>) => {
+    const signupHandler = async (
+        data: z.infer<typeof SignupFormSchema>,
+        setError: (field: string, message: string) => void
+    ) => {
         try {
             // throw new Error();
             const resp = await authApi.signup(data);
@@ -23,24 +26,12 @@ export const useSignup = () => {
 
             // navigate(ROUTES.HOME);
         } catch (error) {
-            if (error instanceof AxiosError) {
-                // преобразовать в массив ошибок
-                // const res = Object.entries(error);
-                //
-                // массив ошибок по нашим полям
-
-                // реализовать для тоста - красивого вывода
-                // react-form работа с ключем error
-                const errorsArray = Object.entries(error.response?.data.error);
-                // const errorMes = errorsArray.map(
-                //     (err) =>
-                //         `<b>${err[0]}: </b> ${err[1].map(
-                //             (innerErr) => `<span>${innerErr}</span><br>`
-                //         )} <br>`
-                // );
-
-                toast.error("Signup fail");
+            if (error instanceof AxiosError && error.response?.data?.error) {
+                setError("email", error.response.data.error);
+            } else {
+                setError("root", "Произошла ошибка");
             }
+            throw error; // Пробрасываем ошибку дальше
         }
     };
 

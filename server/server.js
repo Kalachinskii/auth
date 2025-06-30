@@ -1,13 +1,9 @@
-// npm i express
 import express from "express";
-// npm i cors
 import cors from "cors";
-// import { error } from "console";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-// иницилизация
 const app = express();
 app.use(express.json());
 app.use(cors({ origin: "http://localhost:5173" }));
@@ -112,7 +108,7 @@ app.post("/signup", async (request, response) => {
     });
     // если есть такая почта
     if (isUserExist) {
-        return response.status(400).json({ error: "Login is already exist" });
+        return response.status(400).json({ error: "Логин уже существует" });
     }
     // шифруем пароль
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -135,7 +131,7 @@ app.post("/signup", async (request, response) => {
             .json({ token, user: { id: newUser.id, email: newUser.email } });
         // негативчик - выдаём ошибку сервера
     } else {
-        return response.status(500).json({ error: "Server error" });
+        return response.status(500).json({ error: "Ошибка сервера" });
     }
 });
 
