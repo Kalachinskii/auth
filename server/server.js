@@ -2,21 +2,18 @@
 import express from "express";
 // npm i cors
 import cors from "cors";
-import { error } from "console";
+// import { error } from "console";
 import { PrismaClient } from "@prisma/client";
-// npm i nodemon -D для изменений в реальном времени без перезапуска сервера
-// настроить в пакете.джесон - "server": "nodemon server/server.js"
-// теперь запуск с npm run server
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 // иницилизация
 const app = express();
-// автоматически парсим входящие JSON-запросы
 app.use(express.json());
-// С какого клиента ловить запросы - origin: "http://localhost:5173"
-// cors() - не воспринемай запросы как чужеродные
-// credentials: true - достоверный клиент
-// app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(cors({ origin: "http://localhost:5173" }));
+// создаьть экземпляр класса
+const prisma = new PrismaClient();
+const jwt_secret = process.env.JWT_SECRET;
 
 //_________________________________________________
 // проверка формы сервера
@@ -73,9 +70,6 @@ app.get("/", (request, response) => {
     });
 });
 
-// создаьть экземпляр класса
-const prisma = new PrismaClient();
-
 app.post("/signin", (request, response) => {
     if (!request.body.email || !request.body.password) {
         return response
@@ -100,15 +94,15 @@ app.post("/signin", (request, response) => {
 });
 
 app.post("/signup", async (request, response) => {
-    // console.log(request.body);
-    /*{
-      email: 'asd@gmail.com',
-      password: 'Qwe123',
-      confirmPassword: 'Qwe123'
-    }*/
+    console.log(jwt_secret);
+    request.body = {
+        email: "asd@mail.ru",
+        password: "123",
+        confirmPassword: "123",
+    };
 
-    // проверить
     const result = SignupFormSchema.safeParse(request.body);
+
     if (!result.success) {
         return response
             .status(400)
@@ -116,35 +110,7 @@ app.post("/signup", async (request, response) => {
     }
 
     const { email, password } = request.body;
-    // await p
-    // return;
-    // ZOD - заменил валидацию
-    // if (!request.body.email || !request.body.password) {
-    //   return response
-    //     .status(400)
-    //     .json({ error: "Вы должны передать email и password" });
-    // }
-    // const { email, password } = request.body;
 
-    // const email = "sda@mail.ru";
-    // const password = "Asdd12323";
-
-    // const users = [
-    //   { email: "admin@mail.ru", password: "1234" },
-    //   { email: "user@mail.ru", password: "1234" },
-    // ];
-    // const user = users.some(
-    //   (user) => user.email === email && user.password === password
-    // );
-    // if (user) {
-    //   response.status(400).json({ error: "Пользователь существует" });
-    // } else {
-    //   user.push({ email, password });
-    //   response.status(201).json({ message: "Вы успешно зарегистрировались" });
-    // }
-
-    // new user s 0
-    // существует ли пользователь
     const isUserExist = await prisma.user.findUnique({
         where: {
             email,
@@ -154,18 +120,25 @@ app.post("/signup", async (request, response) => {
         return response.status(400).json({ error: "Login is already exist" });
     }
 
-    const hashedPassword = await bcript.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    await prisma.user.create({
+    const newUser = await prisma.user.create({
         data: {
             email,
             password: hashedPassword,
         },
     });
+
+    if (newUser) {
+        // подпись - установить сессию
+        // 1 - user | 2 - подпись | 3 - время сессии
+        // токен состоит из 3 частей
+        const token = jwt.sign({ id: newUser.id }, jwt_secret, {
+            expiresIn: "1h",
+        });
+    }
+
+    return response.status(201).json({ message: "OK" });
 });
 
-// будет работать на порте 3000
 app.listen(4000, () => console.log("Сервер запущен"));
-//                  запуск
-// cd server
-// node server.js
