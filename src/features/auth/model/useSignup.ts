@@ -12,8 +12,10 @@ export const useSignup = () => {
     const signupHandler = async (data: z.infer<typeof SignupFormSchema>) => {
         try {
             // throw new Error();
-            await authApi.signup(data);
-            navigate(ROUTES.HOME);
+            const resp = await authApi.signup(data);
+            console.log(resp);
+
+            // navigate(ROUTES.HOME);
         } catch (error) {
             if (error instanceof AxiosError) {
                 // преобразовать в массив ошибок
