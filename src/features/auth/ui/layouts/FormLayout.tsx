@@ -26,7 +26,8 @@ interface FormLayoutProps {
     onSubmit: (
         data:
             | z.infer<typeof SigninFormSchema>
-            | z.infer<typeof SignupFormSchema>
+            | z.infer<typeof SignupFormSchema>,
+        setError: (field: string, message: string) => void
     ) => Promise<void>;
     confirmField?: boolean;
     link: {
@@ -56,18 +57,28 @@ export const FormLayout = ({
     const {
         watch,
         formState: { errors, isValid },
+        setError,
     } = form;
-    const isPasswordValid = !errors.password && watch("password");
 
+    const isPasswordValid = !errors.password && watch("password");
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    const handleFormSubmit = async (data: z.infer<typeof schema>) => {
+        await onSubmit(data, (field, message) => {
+            setError(field as keyof z.infer<typeof schema>, {
+                type: "server",
+                message: message,
+            });
+        });
+    };
 
     return (
         <div>
             <Form {...form}>
                 <Toaster />
                 <form
-                    onSubmit={form.handleSubmit(onSubmit)}
+                    onSubmit={form.handleSubmit(handleFormSubmit)}
                     className="space-y-6 mb-5"
                 >
                     <FormField
