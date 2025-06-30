@@ -94,51 +94,49 @@ app.post("/signin", (request, response) => {
 });
 
 app.post("/signup", async (request, response) => {
-    console.log(jwt_secret);
-    request.body = {
-        email: "asd@mail.ru",
-        password: "123",
-        confirmPassword: "123",
-    };
-
+    // проверили что все правельное пришло из формы
     const result = SignupFormSchema.safeParse(request.body);
-
+    // если вернулись ошибки - выдаём ошибку
     if (!result.success) {
         return response
             .status(400)
             .json({ error: result.error.flatten().fieldErrors });
     }
-
+    // вытянули почту и пароль
     const { email, password } = request.body;
-
+    // проверка на существующего пользовотеля (почта)
     const isUserExist = await prisma.user.findUnique({
         where: {
             email,
         },
     });
+    // если есть такая почта
     if (isUserExist) {
         return response.status(400).json({ error: "Login is already exist" });
     }
-
+    // шифруем пароль
     const hashedPassword = await bcrypt.hash(password, 10);
-
+    // отправляем в БД (призма)
     const newUser = await prisma.user.create({
         data: {
             email,
             password: hashedPassword,
         },
     });
-
+    // Позитивчик - для нового пользовотеля деаем токен
     if (newUser) {
-        // подпись - установить сессию
-        // 1 - user | 2 - подпись | 3 - время сессии
-        // токен состоит из 3 частей
+        // подпись - установить сессию - user | подпись | время сессии
         const token = jwt.sign({ id: newUser.id }, jwt_secret, {
             expiresIn: "1h",
         });
-    }
 
-    return response.status(201).json({ message: "OK" });
+        return response
+            .status(201)
+            .json({ token, user: { id: newUser.id, email: newUser.email } });
+        // негативчик - выдаём ошибку сервера
+    } else {
+        return response.status(500).json({ error: "Server error" });
+    }
 });
 
 app.listen(4000, () => console.log("Сервер запущен"));
