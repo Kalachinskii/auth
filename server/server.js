@@ -14,6 +14,7 @@ const jwt_secret = process.env.JWT_SECRET;
 //_________________________________________________
 // проверка формы сервера
 import { z } from "zod";
+import { useState } from "react";
 
 const formSchemaConst = {
     emailMin: 6,
@@ -90,6 +91,9 @@ app.post("/signin", (request, response) => {
 });
 
 app.post("/signup", async (request, response) => {
+    const [sererValidationErrors, setSererValidationErrors] =
+        useState < ValidationFormFieldTypes > null;
+
     // проверили что все правельное пришло из формы
     const result = SignupFormSchema.safeParse(request.body);
     // если вернулись ошибки - выдаём ошибку
