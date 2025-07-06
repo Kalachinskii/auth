@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { SigninFormSchema, SignupFormSchema } from "./formSchema";
+import type { BaseFormLayoutProps } from "../types";
 
 export const useFormLayout = ({
     schema,
