@@ -21,14 +21,12 @@ export const useFormLayout = ({
 
     const {
         watch,
-        formState: { errors, isValid },
+        formState: { errors, isValid, isDirty, isSubmitting },
     } = form;
 
     const isPasswordValid = !errors.password && watch("password");
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-    type FormFields = "email" | "password" | "confirmPassword";
 
     useEffect(() => {
         // при загрузке странице будет подчёркивать что поле не заполнено
@@ -56,5 +54,8 @@ export const useFormLayout = ({
         isPasswordValid,
         showConfirmPassword,
         setShowConfirmPassword,
+        isValid,
+        isDirty,
+        isSubmitting,
     };
 };
