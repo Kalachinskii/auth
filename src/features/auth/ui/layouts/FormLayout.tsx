@@ -11,18 +11,16 @@ import { Input } from "@/shared/ui/input";
 
 import { Eye, EyeOff } from "lucide-react";
 
-import { z } from "zod";
+import { isDirty, isValid, z } from "zod";
 import { Link } from "react-router-dom";
 import type {
     SigninFormSchema,
     SignupFormSchema,
 } from "../../model/formSchema";
 import { Toaster } from "sonner";
-import type {
-    BaseFormLayoutProps,
-    ValidationFormFieldTypes,
-} from "../../types";
+import type { BaseFormLayoutProps } from "../../types";
 import { useFormLayout } from "../../model/useFormLayout";
+import { Spinner } from "@/shared/ui/spinner";
 
 interface FormLayoutProps extends BaseFormLayoutProps {
     buttonTitle: string;
@@ -52,6 +50,9 @@ export const FormLayout = ({
         isPasswordValid,
         showConfirmPassword,
         setShowConfirmPassword,
+        isValid,
+        isDirty,
+        isSubmitting,
     } = useFormLayout({
         schema,
         sererValidationErrors,
@@ -175,8 +176,13 @@ export const FormLayout = ({
                     <Button
                         className="w-full bg-[#2859FE] py-6 cursor-pointer hover:bg-[#1642d3]"
                         type="submit"
+                        disabled={!isDirty || !isValid}
                     >
-                        {buttonTitle}
+                        {isSubmitting ? (
+                            <Spinner size={"small"} />
+                        ) : (
+                            buttonTitle
+                        )}
                     </Button>
                 </form>
                 <Button
