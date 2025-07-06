@@ -6,14 +6,12 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { authApi } from "@/entities/user/api/auth";
 import * as Cookies from "js-cookie";
+import type { ValidationFormFieldTypes } from "../types";
 
 export const useSignup = () => {
     const navigate = useNavigate();
 
-    const signupHandler = async (
-        data: z.infer<typeof SignupFormSchema>,
-        setError: (field: string, message: string) => void
-    ) => {
+    const signupHandler = async (data: z.infer<typeof SignupFormSchema>) => {
         try {
             // throw new Error();
             const resp = await authApi.signup(data);
@@ -25,13 +23,16 @@ export const useSignup = () => {
             Cookies.default.set("token", resp.data.token, { expires: 1 / 24 });
 
             // navigate(ROUTES.HOME);
-        } catch (error) {
-            if (error instanceof AxiosError && error.response?.data?.error) {
-                setError("email", error.response.data.error);
+        } catch (err) {
+            const error = err as AxiosError<{
+                error: string | ValidationFormFieldTypes;
+            }>;
+            if (error.response?.data.error instanceof Object) {
+                //...
             } else {
-                setError("root", "Произошла ошибка");
+                // текстовые ошибки выводим модалкой
+                toast.error(error.response?.data.error);
             }
-            throw error; // Пробрасываем ошибку дальше
         }
     };
 

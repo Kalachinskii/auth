@@ -26,8 +26,7 @@ interface FormLayoutProps {
     onSubmit: (
         data:
             | z.infer<typeof SigninFormSchema>
-            | z.infer<typeof SignupFormSchema>,
-        setError: (field: string, message: string) => void
+            | z.infer<typeof SignupFormSchema>
     ) => Promise<void>;
     confirmField?: boolean;
     link: {
@@ -64,13 +63,32 @@ export const FormLayout = ({
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+    type FormFields = "email" | "password" | "confirmPassword";
+
+    function isErrorResult(
+        result: unknown
+    ): result is { success: false; field: FormFields; message: string } {
+        return (
+            !!result &&
+            typeof result === "object" &&
+            "success" in result &&
+            result.success === false &&
+            "field" in result &&
+            typeof result.field === "string" &&
+            ["email", "password", "confirmPassword"].includes(result.field) &&
+            "message" in result &&
+            typeof result.message === "string"
+        );
+    }
+
     const handleFormSubmit = async (data: z.infer<typeof schema>) => {
-        await onSubmit(data, (field, message) => {
-            setError(field as keyof z.infer<typeof schema>, {
+        const result = await onSubmit(data);
+        if (isErrorResult(result)) {
+            setError(result.field, {
                 type: "server",
-                message: message,
+                message: result.message,
             });
-        });
+        }
     };
 
     return (
