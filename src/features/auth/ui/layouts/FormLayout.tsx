@@ -8,32 +8,33 @@ import {
     FormMessage,
 } from "@/shared/ui/form";
 import { Input } from "@/shared/ui/input";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+
 import { Eye, EyeOff } from "lucide-react";
 
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "react-router-dom";
 import type {
     SigninFormSchema,
     SignupFormSchema,
 } from "../../model/formSchema";
 import { Toaster } from "sonner";
+import type {
+    BaseFormLayoutProps,
+    ValidationFormFieldTypes,
+} from "../../types";
+import { useFormLayout } from "../../model/useFormLayout";
 
-interface FormLayoutProps {
+interface FormLayoutProps extends BaseFormLayoutProps {
     buttonTitle: string;
     onSubmit: (
         data:
             | z.infer<typeof SigninFormSchema>
             | z.infer<typeof SignupFormSchema>
     ) => Promise<void>;
-    confirmField?: boolean;
     link: {
         to: string;
         title: string;
     };
-    schema: typeof SigninFormSchema | typeof SignupFormSchema;
 }
 
 export const FormLayout = ({
@@ -42,61 +43,27 @@ export const FormLayout = ({
     confirmField,
     link,
     schema,
+    sererValidationErrors,
 }: FormLayoutProps) => {
-    const form = useForm<z.infer<typeof schema>>({
-        resolver: zodResolver(schema),
-        mode: "onChange",
-        defaultValues: {
-            email: "",
-            password: "",
-            ...(confirmField ? { confirmPassword: "" } : {}),
-        },
-    });
-
     const {
-        watch,
-        formState: { errors, isValid },
-        setError,
-    } = form;
-
-    const isPasswordValid = !errors.password && watch("password");
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-    type FormFields = "email" | "password" | "confirmPassword";
-
-    function isErrorResult(
-        result: unknown
-    ): result is { success: false; field: FormFields; message: string } {
-        return (
-            !!result &&
-            typeof result === "object" &&
-            "success" in result &&
-            result.success === false &&
-            "field" in result &&
-            typeof result.field === "string" &&
-            ["email", "password", "confirmPassword"].includes(result.field) &&
-            "message" in result &&
-            typeof result.message === "string"
-        );
-    }
-
-    const handleFormSubmit = async (data: z.infer<typeof schema>) => {
-        const result = await onSubmit(data);
-        if (isErrorResult(result)) {
-            setError(result.field, {
-                type: "server",
-                message: result.message,
-            });
-        }
-    };
+        form,
+        showPassword,
+        setShowPassword,
+        isPasswordValid,
+        showConfirmPassword,
+        setShowConfirmPassword,
+    } = useFormLayout({
+        schema,
+        sererValidationErrors,
+        confirmField,
+    });
 
     return (
         <div>
             <Form {...form}>
                 <Toaster />
                 <form
-                    onSubmit={form.handleSubmit(handleFormSubmit)}
+                    onSubmit={form.handleSubmit(onSubmit)}
                     className="space-y-6 mb-5"
                 >
                     <FormField

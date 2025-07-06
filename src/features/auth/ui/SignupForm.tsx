@@ -4,7 +4,7 @@ import { FormLayout } from "./layouts/FormLayout";
 import { SignupFormSchema } from "../model/formSchema";
 
 export const SignupForm = () => {
-    const { signupHandler } = useSignup();
+    const { signupHandler, sererValidationErrors } = useSignup();
     return (
         <FormLayout
             buttonTitle="Sign up"
@@ -12,6 +12,7 @@ export const SignupForm = () => {
             confirmField={true}
             link={{ to: ROUTES.SIGNIN, title: "Sign in" }}
             schema={SignupFormSchema}
+            sererValidationErrors={sererValidationErrors}
         />
     );
 };
