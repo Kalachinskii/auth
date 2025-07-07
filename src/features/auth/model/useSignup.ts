@@ -7,10 +7,13 @@ import { toast } from "sonner";
 import { authApi } from "@/entities/user/api/auth";
 import * as Cookies from "js-cookie";
 import type { ValidationFormFieldTypes } from "../types";
+import { ROUTES } from "@/shared/router/constants";
+import { useState } from "react";
 
 export const useSignup = () => {
+    const [sererValidationErrors, setSererValidationErrors] =
+        useState<ValidationFormFieldTypes | null>(null);
     const navigate = useNavigate();
-
     const signupHandler = async (data: z.infer<typeof SignupFormSchema>) => {
         try {
             // throw new Error();
@@ -21,20 +24,19 @@ export const useSignup = () => {
             if (!resp.data.token) throw new Error("Нет токена");
             // 1 - день / 24 часа т.к. задавали время 1 час
             Cookies.default.set("token", resp.data.token, { expires: 1 / 24 });
-
-            // navigate(ROUTES.HOME);
+            navigate(ROUTES.HOME);
         } catch (err) {
             const error = err as AxiosError<{
                 error: string | ValidationFormFieldTypes;
             }>;
             if (error.response?.data.error instanceof Object) {
-                //...
+                setSererValidationErrors(error.response?.data.error);
             } else {
-                // текстовые ошибки выводим модалкой
+                // модалкой выводим текстовые ошибки
                 toast.error(error.response?.data.error);
             }
         }
     };
 
-    return { signupHandler };
+    return { signupHandler, sererValidationErrors };
 };
