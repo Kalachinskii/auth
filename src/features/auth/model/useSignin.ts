@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/shared/router/constants";
 import { toast } from "sonner";
 import { authApi } from "@/entities/user/api/auth";
+import * as Cookies from "js-cookie";
 
 export const useSignin = () => {
     const navigate = useNavigate();
@@ -13,7 +14,10 @@ export const useSignin = () => {
 
         try {
             // throw new Error();
-            await authApi.signin(data);
+            const resp = await authApi.signin(data);
+            if (!resp.data.token) throw new Error("Нет токена");
+            // 1 - день / 24 часа т.к. задавали время 1 час
+            Cookies.default.set("token", resp.data.token, { expires: 1 / 24 });
             navigate(ROUTES.HOME);
         } catch (error) {
             toast.error("Signin fail");
