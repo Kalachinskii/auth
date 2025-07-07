@@ -176,7 +176,7 @@ export const FormLayout = ({
                     <Button
                         className="w-full bg-[#2859FE] py-6 cursor-pointer hover:bg-[#1642d3]"
                         type="submit"
-                        disabled={!isDirty || !isValid}
+                        disabled={!isDirty || !isValid || isSubmitting}
                     >
                         {isSubmitting ? (
                             <Spinner size={"small"} />

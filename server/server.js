@@ -67,33 +67,36 @@ app.get("/", (request, response) => {
     });
 });
 
-app.post("/signin", (request, response) => {
-    if (!request.body.email || !request.body.password) {
+app.post("/signin", async (request, response) => {
+    const result = SigninFormSchema.safeParse(request.body);
+    if (!result.success) {
         return response
             .status(400)
-            .json({ error: "Вы должны передать email и password" });
+            .json({ error: result.error.flatten().fieldErrors });
     }
-
-    const { email, password } = request.body;
-    const users = [
-        { email: "admin@mail.ru", password: "Qwe123" },
-        { email: "user@mail.ru", password: "1234" },
-    ];
-    const user = users.find(
-        (user) => user.email === email && user.password === password
-    );
-    if (user) {
-        // ответ от сервера
-        response.status(200).json({ message: "Вы успешно авторизовались" });
-    } else {
-        response.status(401).json({ error: "Пользователь не найден" });
+    const { email, password } = result.data;
+    const user = await prisma.user.findUnique({
+        where: {
+            email,
+        },
+    });
+    if (!user) {
+        return response.status(401).json({ error: "Некоректный логин" });
     }
+    // сравнить захешированные пароли
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+        return response.status(401).json({ error: "Неправельный пароль" });
+    }
+    const token = jwt.sign({ id: user.id }, jwt_secret, {
+        expiresIn: "1h",
+    });
+    return response
+        .status(200)
+        .json({ token, user: { id: user.id, email: user.email } });
 });
 
 app.post("/signup", async (request, response) => {
-    const [sererValidationErrors, setSererValidationErrors] =
-        useState < ValidationFormFieldTypes > null;
-
     // проверили что все правельное пришло из формы
     const result = SignupFormSchema.safeParse(request.body);
     // если вернулись ошибки - выдаём ошибку
@@ -103,7 +106,7 @@ app.post("/signup", async (request, response) => {
             .json({ error: result.error.flatten().fieldErrors });
     }
     // вытянули почту и пароль
-    const { email, password } = request.body;
+    const { email, password } = result.data;
     // проверка на существующего пользовотеля (почта)
     const isUserExist = await prisma.user.findUnique({
         where: {

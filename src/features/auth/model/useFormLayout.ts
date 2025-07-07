@@ -34,15 +34,15 @@ export const useFormLayout = ({
 
         // entries переводит {[],[],[]} в [[],[],[]]
         if (sererValidationErrors) {
-            Object.entries(
-                sererValidationErrors.forEach(([field, message]) => {
+            Object.entries(sererValidationErrors).forEach(
+                ([field, message]) => {
                     // console.log(field);
                     // console.log(message);
                     form.setError(field as keyof z.infer<typeof schema>, {
                         type: "server",
                         message: message.join("\n"),
                     });
-                })
+                }
             );
         }
     }, [sererValidationErrors]);
