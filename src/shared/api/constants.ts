@@ -1,5 +1,7 @@
-// куда будут отправляться запросы
+// путь без / для подстановок где нету навигации
+import { RouteNames } from "../types";
+
 export const ROUTES = {
-  SIGNIN: "signin",
-  SIGNUP: "signup",
+    SIGNIN: RouteNames["Signin"],
+    SIGNUP: RouteNames["Signup"],
 } as const;

@@ -1,16 +1,20 @@
 import { ROUTES } from "@/shared/router/constants";
-import { useSignup } from "../model/useSignup";
+import { ROUTES as ROUTES_VALUES } from "@/shared/api/constants";
 import { FormLayout } from "./layouts/FormLayout";
 import { SignupFormSchema } from "../model/formSchema";
+import { useAuth } from "../model/useAuth";
 
 export const SignupForm = () => {
-    const { signupHandler, sererValidationErrors } = useSignup();
+    const { authHandler, sererValidationErrors } = useAuth(
+        ROUTES_VALUES.SIGNUP
+    );
+
     return (
         <FormLayout
             buttonTitle="Sign up"
-            onSubmit={signupHandler}
+            onSubmit={authHandler}
             confirmField={true}
-            link={{ to: ROUTES.SIGNIN, title: "Sign in" }}
+            link={{ to: ROUTES.SIGNIN, title: "Sign up" }}
             schema={SignupFormSchema}
             sererValidationErrors={sererValidationErrors}
         />

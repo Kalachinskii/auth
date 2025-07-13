@@ -1,5 +1,8 @@
+// путь с / для навигации
+import { RouteNames } from "../types";
+
 export const ROUTES = {
-  HOME: "/",
-  SIGNIN: "/signin",
-  SIGNUP: "/signup",
+    HOME: "/",
+    SIGNIN: `/${RouteNames["Signin"]}`,
+    SIGNUP: `/${RouteNames["Signup"]}`,
 } as const;
