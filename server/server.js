@@ -15,6 +15,7 @@ const jwt_secret = process.env.JWT_SECRET;
 // проверка формы сервера
 import { z } from "zod";
 import { useState } from "react";
+import { error } from "console";
 
 const formSchemaConst = {
     emailMin: 6,
@@ -140,6 +141,31 @@ app.post("/signup", async (request, response) => {
     } else {
         return response.status(500).json({ error: "Ошибка сервера" });
     }
+});
+
+const checkAuth = (req, resp, next) => {
+    // console.log(req.headers);
+    if (!req.headers.authorization) {
+        return resp.status(401).json({ error: "Токен не существует" });
+    }
+
+    const token = req.headers.authorization.split(" ")[1];
+
+    if (token === "undefined") {
+        return resp.status(401).json({ error: "Токен не существует" });
+    }
+
+    jwt.verify(token, jwt_secret, (req, user) => {
+        if (err) {
+            return resp.status(401).json({ error: "Некоректный токен" });
+        }
+        next();
+    });
+};
+
+// get(url, midlware, func)
+app.get("/protected", checkAuth, async (req, resp) => {
+    console.log(2);
 });
 
 app.listen(4000, () => console.log("Сервер запущен"));
