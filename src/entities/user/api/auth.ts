@@ -4,19 +4,19 @@ import { ROUTES } from "@/shared/api/constants";
 import type { AxiosResponse } from "axios";
 
 interface IUserRequest extends Pick<IUser, "email" | "password"> {}
-interface IUserResponse {
+interface IUserData {
     id: number;
     email: string;
 }
 // что из себя представляет ответ от сервера
-interface IUserSignupResponse {
+interface IUserResponse {
     token: string;
-    user: IUserResponse;
+    user: IUserData;
 }
 
 export const authApi = {
     signin: (data: IUserRequest) =>
-        api.post<{ message: string }>(ROUTES.SIGNIN, data),
+        api.post<IUserResponse>(ROUTES.SIGNIN, data),
     signup: (data: IUserRequest) =>
-        api.post<IUserSignupResponse>(ROUTES.SIGNUP, data),
+        api.post<IUserResponse>(ROUTES.SIGNUP, data),
 };
