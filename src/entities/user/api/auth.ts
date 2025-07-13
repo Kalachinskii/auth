@@ -1,7 +1,6 @@
 import { api } from "@/shared/api/axios-instance";
 import type { IUser } from "../types";
 import { ROUTES } from "@/shared/api/constants";
-import type { AxiosResponse } from "axios";
 
 interface IUserRequest extends Pick<IUser, "email" | "password"> {}
 interface IUserData {
