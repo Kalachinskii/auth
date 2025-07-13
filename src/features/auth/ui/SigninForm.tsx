@@ -5,13 +5,14 @@ import { useSignin } from "../model/useSignin";
 // import { useSignin } from "../model/useSignin";
 
 export const SigninForm = () => {
-    const { signinHandler } = useSignin();
+    const { signinHandler, sererValidationErrors } = useSignin();
     return (
         <FormLayout
             buttonTitle="Sign in"
             onSubmit={signinHandler}
             link={{ to: ROUTES.SIGNUP, title: "Sign up" }}
             schema={SigninFormSchema}
+            sererValidationErrors={sererValidationErrors}
         />
     );
 };
