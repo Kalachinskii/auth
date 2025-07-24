@@ -176,7 +176,7 @@ const checkAuth = (req, resp, next) => {
 
 // get(url, midlware, func)
 app.get("/protected", checkAuth, async (req, resp) => {
-  console.log(2);
+  return resp.status(200).json({ mes: "Oks" });
 });
 
 app.listen(4000, () => console.log("Сервер запущен"));
