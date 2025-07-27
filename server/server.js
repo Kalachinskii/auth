@@ -187,6 +187,7 @@ const checkAuth = (req, resp, next) => {
       if (err) {
         throw new Error(messages.invalideToken);
       }
+      req.user = user;
       next();
     });
   } catch (error) {
@@ -196,7 +197,9 @@ const checkAuth = (req, resp, next) => {
 
 // get(url, midlware, func)
 app.get("/api/protected", checkAuth, async (req, resp) => {
-  return resp.status(200).json({ mes: "Oks" });
+  return resp
+    .status(200)
+    .json({ user: { id: req.user.id, email: req.user.email } });
 });
 
 app.listen(4000, () => console.log("Сервер запущен"));

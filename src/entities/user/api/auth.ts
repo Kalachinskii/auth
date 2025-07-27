@@ -1,7 +1,6 @@
 import { api } from "@/shared/api/axios-instance";
 import type { IUser } from "../types";
 import { ROUTES } from "@/shared/api/constants";
-// import Cookies from "js-cookie";
 
 interface IUserRequest extends Pick<IUser, "email" | "password"> {}
 interface IUserData {
@@ -17,12 +16,5 @@ interface IUserResponse {
 export const authApi = {
   signin: (data: IUserRequest) => api.post<IUserResponse>(ROUTES.SIGNIN, data),
   signup: (data: IUserRequest) => api.post<IUserResponse>(ROUTES.SIGNUP, data),
-  // protected: () =>
-  //     api.get(ROUTES.PROTECTED, {
-  //         headers: {
-  //             // описываем токен
-  //             Authorization: `Bearer ${Cookies.get("token")}`,
-  //         },
-  //     }),
-  protected: () => api.get(ROUTES.PROTECTED),
+  protected: () => api.get<{ user: IUserData }>(ROUTES.PROTECTED),
 };
