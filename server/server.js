@@ -14,8 +14,6 @@ const jwt_secret = process.env.JWT_SECRET;
 //_________________________________________________
 // проверка формы сервера
 import { z } from "zod";
-import { useState } from "react";
-import { error } from "console";
 
 const formSchemaConst = {
   emailMin: 6,
@@ -59,7 +57,7 @@ export const SignupFormSchema = BaseFormSchema.extend({
 //_________________________________________________
 
 // каким образом придёт запрос
-app.get("/", (request, response) => {
+app.get("/api/", (request, response) => {
   console.log("успех");
 
   response.status(200).json({
@@ -68,7 +66,7 @@ app.get("/", (request, response) => {
   });
 });
 
-app.post("/signin", async (request, response) => {
+app.post("/api/signin", async (request, response) => {
   const result = SigninFormSchema.safeParse(request.body);
   if (!result.success) {
     return response
@@ -103,7 +101,7 @@ app.post("/signin", async (request, response) => {
   }
 });
 
-app.post("/signup", async (request, response) => {
+app.post("/api/signup", async (request, response) => {
   // проверили что все правельное пришло из формы
   const result = SignupFormSchema.safeParse(request.body);
   // если вернулись ошибки - выдаём ошибку
@@ -175,7 +173,7 @@ const checkAuth = (req, resp, next) => {
 };
 
 // get(url, midlware, func)
-app.get("/protected", checkAuth, async (req, resp) => {
+app.get("/api/protected", checkAuth, async (req, resp) => {
   return resp.status(200).json({ mes: "Oks" });
 });
 
