@@ -3,10 +3,13 @@ import cors from "cors";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+// npm i cookie-parser
+import cookieParser from "cookie-parser";
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cookieParser());
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 // создаьть экземпляр класса
 const prisma = new PrismaClient();
 const jwt_secret = process.env.JWT_SECRET;
@@ -19,6 +22,14 @@ const formSchemaConst = {
   emailMin: 6,
   passwordMin: 4,
   passwordMax: 20,
+};
+
+const generateTockens = (id, email) => {
+  const token = jwt.sign({ id, email }, jwt_secret, {
+    expiresIn: "1h",
+  });
+
+  return { token };
 };
 
 const passwordSchema = z
@@ -54,7 +65,6 @@ export const SignupFormSchema = BaseFormSchema.extend({
   message: "Passwords don't match",
   path: ["confirmPassword"],
 });
-//_________________________________________________
 
 // каким образом придёт запрос
 app.get("/api/", (request, response) => {
@@ -90,12 +100,18 @@ app.post("/api/signin", async (request, response) => {
     if (!isValidPassword) {
       return response.status(401).json({ error: "Неправельный пароль" });
     }
-    const token = jwt.sign({ id: user.id }, jwt_secret, {
-      expiresIn: "1h",
-    });
+    const { token } = generateTockens(user.id, user.email);
+
     return response
+      .cookie("token", token, {
+        httpOnly: true,
+        // куки не передадуться сюда если нет защищенного соеденения
+        secure: true,
+        sameSite: true,
+        maxAge: 60 * 60 * 1000,
+      })
       .status(200)
-      .json({ token, user: { id: user.id, email: user.email } });
+      .json({ user: { id: user.id, email: user.email } });
   } catch (error) {
     return response.status(500).json({ error: "Ошибка сервера" });
   }
@@ -134,17 +150,18 @@ app.post("/api/signup", async (request, response) => {
     });
     // Позитивчик - для нового пользовотеля деаем токен
     if (newUser) {
-      // подпись - установить сессию - user | подпись | время сессии
-      const token = jwt.sign({ id: newUser.id }, jwt_secret, {
-        expiresIn: "1h",
-      });
+      const { token } = generateTockens(newUser.id, newUser.email);
 
       return response
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: true,
+          maxAge: 60 * 60 * 1000,
+        })
         .status(201)
-        .json({ token, user: { id: newUser.id, email: newUser.email } });
-      // негативчик - выдаём ошибку сервера
+        .json({ user: { id: newUser.id, email: newUser.email } });
     } else {
-      // иная ошибка - не 500 посмотреть
       return response.status(500).json({ error: "Ошибка сервера" });
     }
   } catch (error) {
@@ -153,23 +170,28 @@ app.post("/api/signup", async (request, response) => {
 });
 
 const checkAuth = (req, resp, next) => {
-  if (!req.headers.authorization) {
-    return resp.status(401).json({ error: "Токен не существует" });
-  }
+  const messages = {
+    notFoundTocken: "Токен не существует",
+    invalideToken: "Некоректный токен",
+  };
 
-  const token = req.headers.authorization.split(" ")[1];
+  try {
+    // получить токен со стороны клиента
+    const token = req.cookies.token;
 
-  if (token === "undefined") {
-    console.log(1);
-    return resp.status(401).json({ error: "Токен не существует" });
-  }
-  console.log(123);
-  jwt.verify(token, jwt_secret, (err, user) => {
-    if (err) {
-      return resp.status(401).json({ error: "Некоректный токен" });
+    if (!token) {
+      throw new Error(messages.notFoundTocken);
     }
-    next();
-  });
+    console.log(123);
+    jwt.verify(token, jwt_secret, (err, user) => {
+      if (err) {
+        throw new Error(messages.invalideToken);
+      }
+      next();
+    });
+  } catch (error) {
+    return resp.status(401).json({ error: error.message });
+  }
 };
 
 // get(url, midlware, func)

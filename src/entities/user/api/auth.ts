@@ -1,4 +1,4 @@
-import { api, protectedApi } from "@/shared/api/axios-instance";
+import { api } from "@/shared/api/axios-instance";
 import type { IUser } from "../types";
 import { ROUTES } from "@/shared/api/constants";
 // import Cookies from "js-cookie";
@@ -24,5 +24,5 @@ export const authApi = {
   //             Authorization: `Bearer ${Cookies.get("token")}`,
   //         },
   //     }),
-  protected: () => protectedApi.get(ROUTES.PROTECTED),
+  protected: () => api.get(ROUTES.PROTECTED),
 };
