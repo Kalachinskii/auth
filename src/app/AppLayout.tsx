@@ -1,12 +1,13 @@
+import { Header } from "@/widgets/header";
 import { Outlet } from "react-router-dom";
 
 export function AppLayout() {
   return (
     <>
-      <h2>Header</h2>
+      <Header />
       {/* компанент страницы - поступает дочерний элемент роута */}
       <Outlet />
-      <h2>Footer</h2>
+      {/* <h2>Footer</h2> */}
     </>
   );
 }

@@ -14,7 +14,6 @@ app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 const prisma = new PrismaClient();
 const jwt_secret = process.env.JWT_SECRET;
 
-//_________________________________________________
 // проверка формы сервера
 import { z } from "zod";
 
@@ -97,9 +96,11 @@ app.post("/api/signin", async (request, response) => {
     }
     // сравнить захешированные пароли
     const isValidPassword = await bcrypt.compare(password, user.password);
+
     if (!isValidPassword) {
       return response.status(401).json({ error: "Неправельный пароль" });
     }
+
     const { token } = generateTockens(user.id, user.email);
 
     return response
@@ -182,7 +183,7 @@ const checkAuth = (req, resp, next) => {
     if (!token) {
       throw new Error(messages.notFoundTocken);
     }
-    console.log(123);
+
     jwt.verify(token, jwt_secret, (err, user) => {
       if (err) {
         throw new Error(messages.invalideToken);
