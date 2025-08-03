@@ -1,7 +1,6 @@
 import { Signin } from "@/pages/signin";
 import { Signup } from "@/pages/signup";
 import { ROUTES } from "@/shared/router/constants";
-import { Home } from "lucide-react";
 import {
   createBrowserRouter,
   redirect,
@@ -9,7 +8,7 @@ import {
 } from "react-router-dom";
 import { AppLayout } from "./AppLayout";
 import { authApi } from "@/entities/user/api/auth";
-// import { Home } from "@/pages/Home";
+import { Home } from "@/pages/Home";
 
 const router = createBrowserRouter([
   {
@@ -21,7 +20,8 @@ const router = createBrowserRouter([
         loader: async () => {
           try {
             const resp = await authApi.protected();
-            console.log(resp.data.user);
+            // resp.data.user = {id: 6, email: 'asd@gmail.com'}
+            return { user: resp.data.user };
           } catch (error) {
             // перенаправление на signin
             throw redirect(ROUTES.SIGNIN);
