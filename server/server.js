@@ -16,6 +16,7 @@ const jwt_secret = process.env.JWT_SECRET;
 
 // проверка формы сервера
 import { z } from "zod";
+import { error } from "console";
 
 const formSchemaConst = {
   emailMin: 6,
@@ -24,11 +25,15 @@ const formSchemaConst = {
 };
 
 const generateTockens = (id, email) => {
-  const token = jwt.sign({ id, email }, jwt_secret, {
+  const accessToken = jwt.sign({ id, email }, jwt_secret, {
     expiresIn: "1h",
   });
 
-  return { token };
+  const refreshToken = jwt.sign({ id, email }, jwt_secret, {
+    expiresIn: "7d",
+  });
+
+  return { token: accessToken, refreshToken };
 };
 
 const passwordSchema = z
@@ -73,6 +78,23 @@ app.get("/api/", (request, response) => {
     id: 1,
     name: "test",
   });
+});
+
+// выход
+app.get("/api/signout", async (req, resp) => {
+  const token = req.cookies.token;
+  if (token) {
+    resp
+      .status(200)
+      .clearCookie("token", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+      })
+      .json({ message: "Signout success" });
+  } else {
+    return resp.status(401).json({ error: "Token is not found" });
+  }
 });
 
 app.post("/api/signin", async (request, response) => {
