@@ -1,6 +1,7 @@
 //@ts-ignore
 export enum RouteNames {
-    Signin = "signin",
-    Signup = "signup",
-    Protected = "protected",
+  Signin = "signin",
+  Signup = "signup",
+  Signout = "signout",
+  Protected = "protected",
 }
