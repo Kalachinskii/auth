@@ -1,39 +1,33 @@
 import express from "express";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
+import { z } from "zod";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-// npm i cookie-parser
+import { useState } from "react";
 import cookieParser from "cookie-parser";
 
 const app = express();
+const prisma = new PrismaClient();
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
-// создаьть экземпляр класса
-const prisma = new PrismaClient();
-const jwt_secret = process.env.JWT_SECRET;
 
-// проверка формы сервера
-import { z } from "zod";
-import { error } from "console";
+const jwt_secret = process.env.JWT_SECRET;
+const jwt_refresh_secret = process.env.JWT_REFRESH_SECRET;
+
+const tokens_expiration_time = {
+  jwt_access_token_format: "1h",
+  jwt_refresh_token_format: "7d",
+  date_access_token_format: 60 * 60 * 1000,
+  date_refresh_token_format: 7 * 24 * 60 * 60 * 1000,
+};
 
 const formSchemaConst = {
   emailMin: 6,
   passwordMin: 4,
   passwordMax: 20,
-};
-
-const generateTockens = (id, email) => {
-  const accessToken = jwt.sign({ id, email }, jwt_secret, {
-    expiresIn: "1h",
-  });
-
-  const refreshToken = jwt.sign({ id, email }, jwt_secret, {
-    expiresIn: "7d",
-  });
-
-  return { token: accessToken, refreshToken };
 };
 
 const passwordSchema = z
@@ -70,21 +64,169 @@ export const SignupFormSchema = BaseFormSchema.extend({
   path: ["confirmPassword"],
 });
 
-// каким образом придёт запрос
-app.get("/api/", (request, response) => {
-  console.log("успех");
-
-  response.status(200).json({
-    id: 1,
-    name: "test",
+const generateTokens = (id, email) => {
+  const accessToken = jwt.sign({ id, email }, jwt_secret, {
+    expiresIn: tokens_expiration_time.jwt_access_token_format,
   });
+  const refreshToken = jwt.sign({ id, email }, jwt_secret, {
+    expiresIn: tokens_expiration_time.jwt_refresh_token_format,
+  });
+
+  return { token: accessToken, refreshToken };
+};
+
+app.post("/api/signin", async (req, resp) => {
+  // const randomBit = Math.round(Math.random());
+  // if (randomBit === 0) {
+  //   req.body = {
+  //     email: "sda.ru",
+  //     password: "124",
+  //     confirmPassword: "124",
+  //   };
+  // }
+
+  const result = SigninFormSchema.safeParse(req.body);
+  if (!result.success) {
+    return resp.status(400).json({ error: result.error.flatten().fieldErrors });
+  }
+
+  const { email, password } = result.data;
+
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return resp.status(401).json({ error: "Email is not correct" });
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+
+    if (!isValidPassword) {
+      return resp.status(401).json({ error: "Password is not correct" });
+    }
+
+    const { token, refreshToken } = generateTokens(user.id, user.email);
+
+    // return resp
+    //   .status(200)
+    //   .json({ token, user: { id: user.id, email: user.email } });
+
+    await prisma.refreshToken.upsert({
+      where: { userId: user.id },
+      update: {
+        refreshToken: refreshToken,
+        expiresAt: new Date(
+          Date.now() + tokens_expiration_time.date_refresh_token_format
+        ),
+      },
+      create: {
+        userId: user.id,
+        refreshToken: refreshToken,
+        expiresAt: new Date(
+          Date.now() + tokens_expiration_time.date_refresh_token_format
+        ),
+      },
+    });
+
+    return resp
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: true,
+        maxAge: tokens_expiration_time.date_access_token_format,
+      })
+      .cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: true,
+        maxAge: tokens_expiration_time.date_refresh_token_format,
+      })
+      .status(200)
+      .json({ user: { id: user.id, email: user.email } });
+  } catch (err) {
+    return resp.status(500).json({ error: "Server error" });
+  }
 });
 
-// выход
+app.post("/api/signup", async (req, resp) => {
+  // return resp.status(400).json({ error: result.error.flatten().fieldErrors });
+
+  // return resp.status(400).json({ error: "Email is already exist" });
+
+  // console.log(jwt_secret);
+
+  // req.body = {
+  //   email: "sda.ru",
+  //   password: "124",
+  //   confirmPassword: "124",
+  // };
+  const result = SignupFormSchema.safeParse(req.body);
+
+  if (!result.success) {
+    return resp.status(400).json({ error: result.error.flatten().fieldErrors });
+  }
+
+  const { email, password } = result.data;
+
+  try {
+    const isUserExists = await prisma.user.findUnique({ where: { email } });
+
+    if (isUserExists) {
+      return resp.status(400).json({ error: "Email is already exist" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+      },
+    });
+
+    if (newUser) {
+      const { token, refreshToken } = generateTokens(newUser.id, newUser.email);
+      console.log(111);
+
+      await prisma.refreshToken.create({
+        data: {
+          userId: newUser.id,
+          refreshToken: refreshToken,
+          expiresAt: new Date(
+            Date.now() + tokens_expiration_time.date_refresh_token_format
+          ),
+        },
+      });
+      console.log(222);
+
+      return resp
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: true,
+          maxAge: 60 * 60 * 1000,
+        })
+        .cookie("refreshToken", refreshToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: true,
+          maxAge: tokens_expiration_time.date_refresh_token_format,
+        })
+        .status(201)
+        .json({ user: { id: newUser.id, email: newUser.email } });
+    } else {
+      throw new Error();
+    }
+  } catch (err) {
+    console.log(err);
+
+    return resp.status(500).json({ error: "Server error" });
+  }
+});
+
 app.get("/api/signout", async (req, resp) => {
   const token = req.cookies.token;
   if (token) {
-    resp
+    return resp
       .status(200)
       .clearCookie("token", {
         httpOnly: true,
@@ -97,118 +239,23 @@ app.get("/api/signout", async (req, resp) => {
   }
 });
 
-app.post("/api/signin", async (request, response) => {
-  const result = SigninFormSchema.safeParse(request.body);
-  if (!result.success) {
-    return response
-      .status(400)
-      .json({ error: result.error.flatten().fieldErrors });
-  }
-  const { email, password } = result.data;
-
-  // запрос
-  try {
-    const user = await prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
-    if (!user) {
-      return response.status(401).json({ error: "Некоректный логин" });
-    }
-    // сравнить захешированные пароли
-    const isValidPassword = await bcrypt.compare(password, user.password);
-
-    if (!isValidPassword) {
-      return response.status(401).json({ error: "Неправельный пароль" });
-    }
-
-    const { token } = generateTockens(user.id, user.email);
-
-    return response
-      .cookie("token", token, {
-        httpOnly: true,
-        // куки не передадуться сюда если нет защищенного соеденения
-        secure: true,
-        sameSite: true,
-        maxAge: 60 * 60 * 1000,
-      })
-      .status(200)
-      .json({ user: { id: user.id, email: user.email } });
-  } catch (error) {
-    return response.status(500).json({ error: "Ошибка сервера" });
-  }
-});
-
-app.post("/api/signup", async (request, response) => {
-  // проверили что все правельное пришло из формы
-  const result = SignupFormSchema.safeParse(request.body);
-  // если вернулись ошибки - выдаём ошибку
-  if (!result.success) {
-    return response
-      .status(400)
-      .json({ error: result.error.flatten().fieldErrors });
-  }
-  // вытянули почту и пароль
-  const { email, password } = result.data;
-  // проверка на существующего пользовотеля (почта)
-  try {
-    const isUserExist = await prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
-    // если есть такая почта
-    if (isUserExist) {
-      return response.status(400).json({ error: "Логин уже существует" });
-    }
-    // шифруем пароль
-    const hashedPassword = await bcrypt.hash(password, 10);
-    // отправляем в БД (призма)
-    const newUser = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-      },
-    });
-    // Позитивчик - для нового пользовотеля деаем токен
-    if (newUser) {
-      const { token } = generateTockens(newUser.id, newUser.email);
-
-      return response
-        .cookie("token", token, {
-          httpOnly: true,
-          secure: true,
-          sameSite: true,
-          maxAge: 60 * 60 * 1000,
-        })
-        .status(201)
-        .json({ user: { id: newUser.id, email: newUser.email } });
-    } else {
-      return response.status(500).json({ error: "Ошибка сервера" });
-    }
-  } catch (error) {
-    return response.status(500).json({ error: "Ошибка сервера" });
-  }
-});
-
 const checkAuth = (req, resp, next) => {
   const messages = {
-    notFoundTocken: "Токен не существует",
-    invalideToken: "Некоректный токен",
+    notFoundToken: "Token is not found",
+    invalidToken: "Invalid token",
   };
 
   try {
-    // получить токен со стороны клиента
     const token = req.cookies.token;
 
     if (!token) {
-      throw new Error(messages.notFoundTocken);
+      throw new Error(messages.notFoundToken);
     }
 
     jwt.verify(token, jwt_secret, (err, user) => {
       if (err) {
-        throw new Error(messages.invalideToken);
+        // return resp.status(401).json({ error: "Invalid token" });
+        throw new Error(messages.invalidToken);
       }
       req.user = user;
       next();
@@ -216,13 +263,69 @@ const checkAuth = (req, resp, next) => {
   } catch (error) {
     return resp.status(401).json({ error: error.message });
   }
+
+  // next();
 };
 
-// get(url, midlware, func)
 app.get("/api/protected", checkAuth, async (req, resp) => {
   return resp
     .status(200)
     .json({ user: { id: req.user.id, email: req.user.email } });
 });
 
-app.listen(4000, () => console.log("Сервер запущен"));
+app.post("/api/refresh-token", async (req, resp) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) throw new Error("Refresh token is not found");
+
+  try {
+    // тут ломаеться
+    jwt.verify(refreshToken, jwt_refresh_secret, async (err, user) => {
+      if (err) {
+        throw new Error("Нет токена");
+      }
+      // сюда не попадает
+      const dbRefreshToken = await prisma.refreshToken.findUnique({
+        where: { userId: user.id },
+      });
+
+      if (
+        !dbRefreshToken ||
+        !dbRefreshToken.refreshToken ||
+        dbRefreshToken.refreshToken !== refreshToken
+      )
+        throw new Error("Invalid refresh token");
+
+      const { token, newRefreshToken } = generateTokens(user.id, user.email);
+
+      await prisma.refreshToken.update({
+        where: { userId: user.id },
+        data: {
+          token: newRefreshToken,
+          expiresAt: new Date(
+            Date.now() + tokens_expiration_time.date_refresh_token_format
+          ),
+        },
+      });
+
+      return resp
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: true,
+          maxAge: tokens_expiration_time.date_access_token_format,
+        })
+        .cookie("refreshToken", newRefreshToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: true,
+          maxAge: tokens_expiration_time.date_refresh_token_format,
+        })
+        .status(201)
+        .json({ user: { id: user.id, email: user.email } });
+    });
+  } catch (error) {
+    return resp.status(401).json({ error: error.message });
+  }
+});
+
+app.listen(4000, () => console.log("Server started"));

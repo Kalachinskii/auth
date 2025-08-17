@@ -18,14 +18,14 @@ model User {
   email String @unique
   password String
   createdAt DateTime @default(now())
-  refreshToken RefreshToken?
+  refreshToken RefreshToken? 
 }
 
 model RefreshToken {
   id Int @id @default(autoincrement())
   refreshToken String @unique
-  userID Int @unique
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
 }
