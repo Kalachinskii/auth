@@ -3,7 +3,6 @@ import Cookies from "js-cookie";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  // куки передаються автоматически на сервер
   withCredentials: true,
 });
 
@@ -11,15 +10,40 @@ export const api = axios.create({
 //   baseURL: import.meta.env.VITE_API_URL,
 // });
 
-// // config - объект header передаваемый на сервер
 // protectedApi.interceptors.request.use((config) => {
 //   const token = Cookies.get("token");
-//   // добавление токена
 //   if (token) {
 //     config.headers.Authorization = `Bearer ${token}`;
 //   } else {
-//     throw new Error("Остановка запроса, нет токена");
+//     throw new Error("Cancel query. Token is not found");
 //   }
-//   // всегда должен возвращаться config
 //   return config;
 // });
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (
+      error.response.status === 401 &&
+      !originalRequest._retry &&
+      originalRequest.url !== "refresh-token"
+    ) {
+      console.log(222);
+
+      originalRequest._retry = true;
+      try {
+        await api.post("refresh-token");
+        return api(originalRequest);
+      } catch (error) {
+        console.log(1111111);
+        return Promise.reject(error);
+      }
+    }
+
+    console.log(888888888);
+
+    return Promise.reject(error);
+  }
+);
