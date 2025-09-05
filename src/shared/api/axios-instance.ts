@@ -34,7 +34,7 @@ api.interceptors.response.use(
 
       originalRequest._retry = true;
       try {
-        await api.post("refresh-token");
+        await api.get("refresh-token");
         return api(originalRequest);
       } catch (error) {
         console.log(1111111);

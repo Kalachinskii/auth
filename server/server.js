@@ -4,7 +4,6 @@ import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { useState } from "react";
 import cookieParser from "cookie-parser";
 
 const app = express();
@@ -68,7 +67,7 @@ const generateTokens = (id, email) => {
   const accessToken = jwt.sign({ id, email }, jwt_secret, {
     expiresIn: tokens_expiration_time.jwt_access_token_format,
   });
-  const refreshToken = jwt.sign({ id, email }, jwt_secret, {
+  const refreshToken = jwt.sign({ id, email }, jwt_refresh_secret, {
     expiresIn: tokens_expiration_time.jwt_refresh_token_format,
   });
 
@@ -76,16 +75,8 @@ const generateTokens = (id, email) => {
 };
 
 app.post("/api/signin", async (req, resp) => {
-  // const randomBit = Math.round(Math.random());
-  // if (randomBit === 0) {
-  //   req.body = {
-  //     email: "sda.ru",
-  //     password: "124",
-  //     confirmPassword: "124",
-  //   };
-  // }
-
   const result = SigninFormSchema.safeParse(req.body);
+
   if (!result.success) {
     return resp.status(400).json({ error: result.error.flatten().fieldErrors });
   }
@@ -94,6 +85,7 @@ app.post("/api/signin", async (req, resp) => {
 
   try {
     const user = await prisma.user.findUnique({ where: { email } });
+
     if (!user) {
       return resp.status(401).json({ error: "Email is not correct" });
     }
@@ -106,19 +98,9 @@ app.post("/api/signin", async (req, resp) => {
 
     const { token, refreshToken } = generateTokens(user.id, user.email);
 
-    // return resp
-    //   .status(200)
-    //   .json({ token, user: { id: user.id, email: user.email } });
-
-    await prisma.refreshToken.upsert({
-      where: { userId: user.id },
-      update: {
-        refreshToken: refreshToken,
-        expiresAt: new Date(
-          Date.now() + tokens_expiration_time.date_refresh_token_format
-        ),
-      },
-      create: {
+    // при авторизации +новый токен
+    await prisma.refreshToken.create({
+      data: {
         userId: user.id,
         refreshToken: refreshToken,
         expiresAt: new Date(
@@ -148,17 +130,6 @@ app.post("/api/signin", async (req, resp) => {
 });
 
 app.post("/api/signup", async (req, resp) => {
-  // return resp.status(400).json({ error: result.error.flatten().fieldErrors });
-
-  // return resp.status(400).json({ error: "Email is already exist" });
-
-  // console.log(jwt_secret);
-
-  // req.body = {
-  //   email: "sda.ru",
-  //   password: "124",
-  //   confirmPassword: "124",
-  // };
   const result = SignupFormSchema.safeParse(req.body);
 
   if (!result.success) {
@@ -254,8 +225,7 @@ const checkAuth = (req, resp, next) => {
 
     jwt.verify(token, jwt_secret, (err, user) => {
       if (err) {
-        // return resp.status(401).json({ error: "Invalid token" });
-        throw new Error(messages.invalidToken);
+        return resp.status(401).json({ error: messages.invalidToken });
       }
       req.user = user;
       next();
@@ -263,8 +233,6 @@ const checkAuth = (req, resp, next) => {
   } catch (error) {
     return resp.status(401).json({ error: error.message });
   }
-
-  // next();
 };
 
 app.get("/api/protected", checkAuth, async (req, resp) => {
@@ -273,32 +241,34 @@ app.get("/api/protected", checkAuth, async (req, resp) => {
     .json({ user: { id: req.user.id, email: req.user.email } });
 });
 
-app.post("/api/refresh-token", async (req, resp) => {
+app.get("/api/refresh-token", async (req, resp) => {
   const refreshToken = req.cookies.refreshToken;
-  if (!refreshToken) throw new Error("Refresh token is not found");
+  if (!refreshToken) {
+    return resp.status(401).json({ error: "refresh token is not found" });
+  }
 
-  try {
-    // тут ломаеться
-    jwt.verify(refreshToken, jwt_refresh_secret, async (err, user) => {
-      if (err) {
-        throw new Error("Нет токена");
-      }
-      // сюда не попадает
+  jwt.verify(refreshToken, jwt_refresh_secret, async (err, user) => {
+    if (err) {
+      return resp.status(401).json({ error: "Нет токена" });
+    }
+    try {
+      // ищем по refreshToken а не по id user
       const dbRefreshToken = await prisma.refreshToken.findUnique({
-        where: { userId: user.id },
+        where: { refreshToken },
       });
 
       if (
-        !dbRefreshToken ||
-        !dbRefreshToken.refreshToken ||
+        // !dbRefreshToken ||
+        !dbRefreshToken?.refreshToken ||
         dbRefreshToken.refreshToken !== refreshToken
-      )
-        throw new Error("Invalid refresh token");
+      ) {
+        return resp.status(401).json({ error: "Invalid refresh token" });
+      }
 
       const { token, newRefreshToken } = generateTokens(user.id, user.email);
 
       await prisma.refreshToken.update({
-        where: { userId: user.id },
+        where: { id: dbRefreshToken.id },
         data: {
           token: newRefreshToken,
           expiresAt: new Date(
@@ -322,10 +292,10 @@ app.post("/api/refresh-token", async (req, resp) => {
         })
         .status(201)
         .json({ user: { id: user.id, email: user.email } });
-    });
-  } catch (error) {
-    return resp.status(401).json({ error: error.message });
-  }
+    } catch (error) {
+      return resp.status(401).json({ error: error.message });
+    }
+  });
 });
 
 app.listen(4000, () => console.log("Server started"));
