@@ -33,6 +33,7 @@ export const useAuth = (ROUTE_VALUE: `${RouteNames}`) => {
       } else {
         // модалкой выводим текстовые ошибки
         toast.error(error.response?.data.error);
+        toast.error("Authorization error. Try again");
       }
     }
   };
