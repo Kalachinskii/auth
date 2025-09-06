@@ -99,8 +99,28 @@ app.post("/api/signin", async (req, resp) => {
     const { token, refreshToken } = generateTokens(user.id, user.email);
 
     // при авторизации +новый токен
-    await prisma.refreshToken.create({
-      data: {
+    // await prisma.refreshToken.create({
+    //   data: {
+    //     userId: user.id,
+    //     refreshToken: refreshToken,
+    //     expiresAt: new Date(
+    //       Date.now() + tokens_expiration_time.date_refresh_token_format
+    //     ),
+    //   },
+    // });
+    await prisma.refreshToken.upsert({
+      where: {
+        userId: user.id, // Ищем запись по userId
+      },
+      update: {
+        // Если нашли - обновляем
+        refreshToken: refreshToken,
+        expiresAt: new Date(
+          Date.now() + tokens_expiration_time.date_refresh_token_format
+        ),
+      },
+      create: {
+        // Если не нашли - создаем
         userId: user.id,
         refreshToken: refreshToken,
         expiresAt: new Date(
@@ -156,10 +176,18 @@ app.post("/api/signup", async (req, resp) => {
 
     if (newUser) {
       const { token, refreshToken } = generateTokens(newUser.id, newUser.email);
-      console.log(111);
 
-      await prisma.refreshToken.create({
-        data: {
+      await prisma.refreshToken.upsert({
+        where: {
+          userId: newUser.id,
+        },
+        update: {
+          refreshToken: refreshToken,
+          expiresAt: new Date(
+            Date.now() + tokens_expiration_time.date_refresh_token_format
+          ),
+        },
+        create: {
           userId: newUser.id,
           refreshToken: refreshToken,
           expiresAt: new Date(
@@ -167,19 +195,18 @@ app.post("/api/signup", async (req, resp) => {
           ),
         },
       });
-      console.log(222);
 
       return resp
         .cookie("token", token, {
           httpOnly: true,
-          secure: true,
-          sameSite: true,
-          maxAge: 60 * 60 * 1000,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          maxAge: tokens_expiration_time.date_access_token_format,
         })
         .cookie("refreshToken", refreshToken, {
           httpOnly: true,
-          secure: true,
-          sameSite: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
           maxAge: tokens_expiration_time.date_refresh_token_format,
         })
         .status(201)
@@ -188,8 +215,7 @@ app.post("/api/signup", async (req, resp) => {
       throw new Error();
     }
   } catch (err) {
-    console.log(err);
-
+    console.error("Signup error:", err); // Добавьте логирование для отладки
     return resp.status(500).json({ error: "Server error" });
   }
 });
@@ -243,6 +269,7 @@ app.get("/api/protected", checkAuth, async (req, resp) => {
 
 app.get("/api/refresh-token", async (req, resp) => {
   const refreshToken = req.cookies.refreshToken;
+
   if (!refreshToken) {
     return resp.status(401).json({ error: "refresh token is not found" });
   }
@@ -251,6 +278,7 @@ app.get("/api/refresh-token", async (req, resp) => {
     if (err) {
       return resp.status(401).json({ error: "Нет токена" });
     }
+
     try {
       // ищем по refreshToken а не по id user
       const dbRefreshToken = await prisma.refreshToken.findUnique({
@@ -270,7 +298,8 @@ app.get("/api/refresh-token", async (req, resp) => {
       await prisma.refreshToken.update({
         where: { id: dbRefreshToken.id },
         data: {
-          token: newRefreshToken,
+          // token: newRefreshToken,
+          refreshToken: newRefreshToken,
           expiresAt: new Date(
             Date.now() + tokens_expiration_time.date_refresh_token_format
           ),
