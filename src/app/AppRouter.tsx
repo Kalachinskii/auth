@@ -19,11 +19,11 @@ const router = createBrowserRouter([
         element: <Home />,
         loader: async () => {
           try {
+            // прежде чем пустить на Home проверяем доступ
             const resp = await authApi.protected();
-            // resp.data.user = {id: 6, email: 'asd@gmail.com'}
             return { user: resp.data.user };
           } catch (error) {
-            // перенаправление на signin
+            // перенаправление на signin если нет доступа
             throw redirect(ROUTES.SIGNIN);
           }
         },

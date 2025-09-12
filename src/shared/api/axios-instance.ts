@@ -1,49 +1,40 @@
 import axios from "axios";
-import Cookies from "js-cookie";
 
+// создаём экземпляр клиента axios
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
+  // т.к. токен храним в куках - прикладываем куки к каждому запросу
   withCredentials: true,
 });
 
-// export const protectedApi = axios.create({
-//   baseURL: import.meta.env.VITE_API_URL,
-// });
-
-// protectedApi.interceptors.request.use((config) => {
-//   const token = Cookies.get("token");
-//   if (token) {
-//     config.headers.Authorization = `Bearer ${token}`;
-//   } else {
-//     throw new Error("Cancel query. Token is not found");
-//   }
-//   return config;
-// });
-
+// любой ответ от сервера перехватываеться
 api.interceptors.response.use(
+  // если всё ок то пропускаем
   (response) => response,
+  // если с сервера пришла ошибка от отработай этот блок
   async (error) => {
+    // копируем конфигурацию исходного запроса например есть ли доступ к главнйо стр
     const originalRequest = error.config;
 
     if (
+      // если ошибка связана с авторизацией === 401
       error.response.status === 401 &&
+      // небыло перезапроса
       !originalRequest._retry &&
+      // запрос на refresh-token есле еще небыло запроса
       originalRequest.url !== "refresh-token"
     ) {
-      console.log(222);
-
+      // реализовываем перезапрос на refresh-token
       originalRequest._retry = true;
       try {
         await api.get("refresh-token");
         return api(originalRequest);
       } catch (error) {
-        console.log(1111111);
+        // если не смогли зделать refresh-token
         return Promise.reject(error);
       }
     }
-
-    console.log(888888888);
-
+    // если это не 401(не связана с авторизацией) то верни сообщение об ошибке
     return Promise.reject(error);
   }
 );

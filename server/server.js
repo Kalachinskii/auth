@@ -198,15 +198,23 @@ app.post("/api/signup", async (req, resp) => {
 
       return resp
         .cookie("token", token, {
+          // httpOnly: true,
+          // secure: process.env.NODE_ENV === "production",
+          // sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          // maxAge: tokens_expiration_time.date_access_token_format,
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          secure: true,
+          sameSite: true,
           maxAge: tokens_expiration_time.date_access_token_format,
         })
         .cookie("refreshToken", refreshToken, {
+          // httpOnly: true,
+          // secure: process.env.NODE_ENV === "production",
+          // sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          // maxAge: tokens_expiration_time.date_refresh_token_format,
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          secure: true,
+          sameSite: true,
           maxAge: tokens_expiration_time.date_refresh_token_format,
         })
         .status(201)
@@ -261,6 +269,7 @@ const checkAuth = (req, resp, next) => {
   }
 };
 
+// асинхронный запрос через функцию checkAuth
 app.get("/api/protected", checkAuth, async (req, resp) => {
   return resp
     .status(200)
