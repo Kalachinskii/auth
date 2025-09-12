@@ -198,20 +198,12 @@ app.post("/api/signup", async (req, resp) => {
 
       return resp
         .cookie("token", token, {
-          // httpOnly: true,
-          // secure: process.env.NODE_ENV === "production",
-          // sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-          // maxAge: tokens_expiration_time.date_access_token_format,
           httpOnly: true,
           secure: true,
           sameSite: true,
           maxAge: tokens_expiration_time.date_access_token_format,
         })
         .cookie("refreshToken", refreshToken, {
-          // httpOnly: true,
-          // secure: process.env.NODE_ENV === "production",
-          // sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-          // maxAge: tokens_expiration_time.date_refresh_token_format,
           httpOnly: true,
           secure: true,
           sameSite: true,
@@ -223,7 +215,7 @@ app.post("/api/signup", async (req, resp) => {
       throw new Error();
     }
   } catch (err) {
-    console.error("Signup error:", err); // Добавьте логирование для отладки
+    console.error("Signup error:", err);
     return resp.status(500).json({ error: "Server error" });
   }
 });
@@ -231,9 +223,16 @@ app.post("/api/signup", async (req, resp) => {
 app.get("/api/signout", async (req, resp) => {
   const token = req.cookies.token;
   if (token) {
+    // await prisma.refreshToken.findMany({ where: { userId:  } });
+
     return resp
       .status(200)
       .clearCookie("token", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+      })
+      .clearCookie("refreshToken", {
         httpOnly: true,
         secure: true,
         sameSite: "strict",
@@ -295,25 +294,28 @@ app.get("/api/refresh-token", async (req, resp) => {
       });
 
       if (
-        // !dbRefreshToken ||
         !dbRefreshToken?.refreshToken ||
         dbRefreshToken.refreshToken !== refreshToken
       ) {
         return resp.status(401).json({ error: "Invalid refresh token" });
       }
 
-      const { token, newRefreshToken } = generateTokens(user.id, user.email);
+      const { token, refreshToken: newRefreshToken } = generateTokens(
+        user.id,
+        user.email
+      );
 
-      await prisma.refreshToken.update({
+      await prisma.refreshToken.create({
         where: { id: dbRefreshToken.id },
         data: {
-          // token: newRefreshToken,
           refreshToken: newRefreshToken,
           expiresAt: new Date(
             Date.now() + tokens_expiration_time.date_refresh_token_format
           ),
         },
       });
+
+      console.log(newRefreshToken);
 
       return resp
         .cookie("token", token, {
@@ -331,7 +333,7 @@ app.get("/api/refresh-token", async (req, resp) => {
         .status(201)
         .json({ user: { id: user.id, email: user.email } });
     } catch (error) {
-      return resp.status(401).json({ error: error.message });
+      return resp.status(500).json({ error: "Internal server error" });
     }
   });
 });
