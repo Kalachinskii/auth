@@ -22,6 +22,7 @@ import type { BaseFormLayoutProps } from "../../types";
 import { useFormLayout } from "../../model/useFormLayout";
 import { Spinner } from "@/shared/ui/spinner";
 import { GoogleButton } from "@/shared/ui/google-button/googleButton";
+import { authApi } from "@/entities/user";
 
 interface FormLayoutProps extends BaseFormLayoutProps {
   buttonTitle: string;
@@ -168,7 +169,7 @@ export const FormLayout = ({
         <Button variant={"link"} className="text-[#5a7ef5] block m-auto">
           <Link to={link.to}>{link.title}</Link>
         </Button>
-        <GoogleButton onClick={() => alert("")} />
+        <GoogleButton onClick={authApi.authGoogle} />
       </Form>
     </div>
   );

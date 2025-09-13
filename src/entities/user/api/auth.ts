@@ -16,4 +16,10 @@ export const authApi = {
   signout: (data: { id: IUserPublic["id"] }) =>
     api.post<{ message: string }>(ROUTES.SIGNOUT, data),
   protected: () => api.get<IUserResponse>(ROUTES.PROTECTED),
+  // authGoogle: () => api.get(ROUTES.AUTH_GOOGLE),
+  authGoogle: () => {
+    window.location.href = "http://localhost:4000/api/auth-google";
+  },
 };
+// npm install passport
+// npm install passport-google-oauth20

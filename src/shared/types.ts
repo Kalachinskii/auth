@@ -4,4 +4,5 @@ export enum RouteNames {
   Signup = "signup",
   Signout = "signout",
   Protected = "protected",
+  AuthGoogle = "auth-google",
 }

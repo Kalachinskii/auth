@@ -9,9 +9,14 @@ import cookieParser from "cookie-parser";
 const app = express();
 const prisma = new PrismaClient();
 
+import passport from "passport";
+import GoogleStrategy from "passport-google-oauth20";
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+// запускаем
+app.use(passport.initialize());
 
 const jwt_secret = process.env.JWT_SECRET;
 const jwt_refresh_secret = process.env.JWT_REFRESH_SECRET;
@@ -347,5 +352,67 @@ app.get("/api/refresh-token", async (req, resp) => {
     }
   });
 });
+
+passport.serializeUser((user, done) => {
+  // автоматически сработает при отправке / получение от гугла информации
+  done(null, user.id);
+});
+
+// развернуть пришедшие данные в объет
+passport.deserializeUser(async (id, done) => {
+  try {
+    done(null, id);
+  } catch (error) {
+    done(error, null);
+  }
+});
+
+// стратегия
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      // куда перенаправить после аунтификации
+      callbackURL: "http://localhost:4000/api/auth-google/callback",
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        // логика после входа
+        if (!profile.id) throw new Error("fail Google auth");
+        console.log(profile.emails[0].value);
+        return done(null, { test: "SUCCES" });
+      } catch (error) {
+        console.log(error);
+        return done(error, null);
+      }
+    }
+  )
+);
+
+app.get(
+  "/api/auth-google/callback",
+  passport.authenticate("google", {
+    // если не удалось авторизовать пользователя
+    failureRedirect: "http://localhost:5173",
+    session: false,
+  }),
+  // успех
+  async (req, resp) => {
+    try {
+      console.log(req);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+);
+
+app.get(
+  "/api/auth-google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    session: false,
+  })
+);
 
 app.listen(4000, () => console.log("Server started"));
