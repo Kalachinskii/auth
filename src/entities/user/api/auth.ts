@@ -13,6 +13,7 @@ export const authApi = {
   // signin: (data: IUserRequest) => api.post<IUserResponse>(ROUTES.SIGNIN, data),
   signin: (data: IUserRequest) => api.post<IUserResponse>(ROUTES.SIGNIN, data),
   signup: (data: IUserRequest) => api.post<IUserResponse>(ROUTES.SIGNUP, data),
-  signout: () => api.get<{ message: string }>(ROUTES.SIGNOUT),
+  signout: (data: { id: IUserPublic["id"] }) =>
+    api.post<{ message: string }>(ROUTES.SIGNOUT, data),
   protected: () => api.get<IUserResponse>(ROUTES.PROTECTED),
 };

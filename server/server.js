@@ -220,11 +220,16 @@ app.post("/api/signup", async (req, resp) => {
   }
 });
 
-app.get("/api/signout", async (req, resp) => {
-  const token = req.cookies.token;
-  if (token) {
-    // await prisma.refreshToken.findMany({ where: { userId:  } });
+app.post("/api/signout", async (req, resp) => {
+  try {
+    const userId = req.body.id;
 
+    // удаляем куку токена в БД
+    await prisma.refreshToken.deleteMany({
+      where: { userId },
+    });
+
+    // удаляем в куке при успехе в БД
     return resp
       .status(200)
       .clearCookie("token", {
@@ -238,8 +243,8 @@ app.get("/api/signout", async (req, resp) => {
         sameSite: "strict",
       })
       .json({ message: "Signout success" });
-  } else {
-    return resp.status(401).json({ error: "Token is not found" });
+  } catch (error) {
+    return resp.status(500).json({ error: "Ошибка сервера" });
   }
 });
 
