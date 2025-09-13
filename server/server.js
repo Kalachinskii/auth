@@ -379,8 +379,9 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       try {
         // логика после входа
-        if (!profile.id) throw new Error("fail Google auth");
-        console.log(profile.emails[0].value);
+        if (!profile.id || !profile.emails[0].value)
+          throw new Error("fail Google auth");
+        // console.log(profile.emails[0].value);
         return done(null, { test: "SUCCES" });
       } catch (error) {
         console.log(error);
@@ -400,7 +401,7 @@ app.get(
   // успех
   async (req, resp) => {
     try {
-      console.log(req);
+      // console.log(req);
     } catch (error) {
       console.log(error);
     }
