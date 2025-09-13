@@ -98,6 +98,11 @@ app.post("/api/signin", async (req, resp) => {
 
     const { token, refreshToken } = generateTokens(user.id, user.email);
 
+    // при новом входе в систему очищать старые куки
+    await prisma.refreshToken.deleteMany({
+      where: { userId: user.id },
+    });
+
     // при авторизации +новый токен
     // await prisma.refreshToken.create({
     //   data: {

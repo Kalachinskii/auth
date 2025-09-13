@@ -5,18 +5,16 @@ import { SignupFormSchema } from "../model/formSchema";
 import { useAuth } from "../model/useAuth";
 
 export const SignupForm = () => {
-    const { authHandler, sererValidationErrors } = useAuth(
-        ROUTES_VALUES.SIGNUP
-    );
+  const { authHandler, sererValidationErrors } = useAuth(ROUTES_VALUES.SIGNUP);
 
-    return (
-        <FormLayout
-            buttonTitle="Sign up"
-            onSubmit={authHandler}
-            confirmField={true}
-            link={{ to: ROUTES.SIGNIN, title: "Sign up" }}
-            schema={SignupFormSchema}
-            sererValidationErrors={sererValidationErrors}
-        />
-    );
+  return (
+    <FormLayout
+      buttonTitle="Sign up"
+      onSubmit={authHandler}
+      confirmField={true}
+      link={{ to: ROUTES.SIGNIN, title: "Sign in" }}
+      schema={SignupFormSchema}
+      sererValidationErrors={sererValidationErrors}
+    />
+  );
 };
