@@ -14,7 +14,7 @@ import GoogleStrategy from "passport-google-oauth20";
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 // запускаем
 app.use(passport.initialize());
 
@@ -376,13 +376,29 @@ passport.use(
       // куда перенаправить после аунтификации
       callbackURL: "http://localhost:4000/api/auth-google/callback",
     },
-    async (accessToken, refreshToken, profile, done) => {
+    async (_accessToken, _refreshToken, profile, done) => {
       try {
         // логика после входа
         if (!profile.id || !profile.emails[0].value)
           throw new Error("fail Google auth");
         // console.log(profile.emails[0].value);
-        return done(null, { test: "SUCCES" });
+
+        let user = await prisma.user.findUnique({
+          where: { googleId: profile.id },
+        });
+
+        if (!user) {
+          user = await prisma.user.create({
+            data: {
+              googleId: profile.id,
+              email: profile.emails[0].value,
+            },
+          });
+        }
+
+        const tokens = generateTokens(user.id, user.email);
+
+        return done(null, { user, tokens });
       } catch (error) {
         console.log(error);
         return done(error, null);
@@ -393,17 +409,74 @@ passport.use(
 
 app.get(
   "/api/auth-google/callback",
-  passport.authenticate("google", {
-    // если не удалось авторизовать пользователя
-    failureRedirect: "http://localhost:5173",
-    session: false,
-  }),
+  (req, res, next) => {
+    passport.authenticate("google", { session: false }, (err, user, info) => {
+      if (err) {
+        console.log("Authentication error:", err);
+        return res.redirect(
+          `${process.env.FRONTEND_URL}/signup?error=auth_failed`
+        );
+      }
+      if (!user) {
+        console.log("Authentication failed:", info);
+        return res.redirect(
+          `${process.env.FRONTEND_URL}/signup?error=${info?.message || "auth_failed"}`
+        );
+      }
+
+      req.user = user;
+      next();
+    })(req, res, next);
+  },
+  // "/api/auth-google/callback",
+  // passport.authenticate("google", {
+  //   // если не удалось авторизовать пользователя
+  //   // failureRedirect: process.env.FRONTEND_URL,
+  //   failureRedirect: `${process.env.FRONTEND_URL}/signup?error=auth_failed`,
+  //   session: false,
+  // }),
   // успех
   async (req, resp) => {
     try {
-      // console.log(req);
+      // console.log(req.user, req.tokens);
+      const { user, tokens } = req.user;
+
+      await prisma.refreshToken.deleteMany({
+        where: {
+          userId: user.id,
+        },
+      });
+
+      await prisma.refreshToken.create({
+        data: {
+          userId: user.id,
+          refreshToken: tokens.refreshToken,
+          expiresAt: new Date(
+            Date.now() + tokens_expiration_time.date_refresh_token_format
+          ),
+        },
+      });
+
+      return resp
+        .cookie("token", tokens.token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+          maxAge: tokens_expiration_time.date_access_token_format,
+        })
+        .cookie("refreshToken", tokens.refreshToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+          maxAge: tokens_expiration_time.date_refresh_token_format,
+        })
+        .status(201)
+        .redirect(process.env.FRONTEND_URL);
     } catch (error) {
-      console.log(error);
+      console.log("Callvack processing error:", error);
+      return resp.redirect(
+        `${process.env.FRONTEND_URL}/signup?error=server_error`
+      );
     }
   }
 );
