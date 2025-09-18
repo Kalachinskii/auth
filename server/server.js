@@ -414,27 +414,22 @@ app.get(
       if (err) {
         console.log("Authentication error:", err);
         return res.redirect(
-          `${process.env.FRONTEND_URL}/signup?error=auth_failed`
+          `${process.env.FRONTEND_URL}/signin?google_auth_error=true`
         );
       }
       if (!user) {
         console.log("Authentication failed:", info);
         return res.redirect(
-          `${process.env.FRONTEND_URL}/signup?error=${info?.message || "auth_failed"}`
+          `${process.env.FRONTEND_URL}/signin?google_auth_error=true`
         );
       }
 
+      // если с юзером всё ок отправляем данные дальше
       req.user = user;
       next();
     })(req, res, next);
   },
-  // "/api/auth-google/callback",
-  // passport.authenticate("google", {
-  //   // если не удалось авторизовать пользователя
-  //   // failureRedirect: process.env.FRONTEND_URL,
-  //   failureRedirect: `${process.env.FRONTEND_URL}/signup?error=auth_failed`,
-  //   session: false,
-  // }),
+
   // успех
   async (req, resp) => {
     try {
@@ -461,13 +456,13 @@ app.get(
         .cookie("token", tokens.token, {
           httpOnly: true,
           secure: true,
-          sameSite: "lax",
+          sameSite: true,
           maxAge: tokens_expiration_time.date_access_token_format,
         })
         .cookie("refreshToken", tokens.refreshToken, {
           httpOnly: true,
           secure: true,
-          sameSite: "lax",
+          sameSite: true,
           maxAge: tokens_expiration_time.date_refresh_token_format,
         })
         .status(201)
@@ -475,7 +470,7 @@ app.get(
     } catch (error) {
       console.log("Callvack processing error:", error);
       return resp.redirect(
-        `${process.env.FRONTEND_URL}/signup?error=server_error`
+        `${process.env.FRONTEND_URL}/signin?google_auth_error=true`
       );
     }
   }
