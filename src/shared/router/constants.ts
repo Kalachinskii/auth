@@ -2,7 +2,8 @@
 import { RouteNames } from "../types";
 
 export const ROUTES = {
-    HOME: "/",
-    SIGNIN: `/${RouteNames["Signin"]}`,
-    SIGNUP: `/${RouteNames["Signup"]}`,
+  HOME: "/",
+  SIGNIN: `/${RouteNames["Signin"]}`,
+  SIGNUP: `/${RouteNames["Signup"]}`,
+  FORGOT_PASSWORD: `/${RouteNames["ForgotPassword"]}`,
 } as const;

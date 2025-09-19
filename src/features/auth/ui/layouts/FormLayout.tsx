@@ -21,8 +21,9 @@ import { Toaster } from "sonner";
 import type { BaseFormLayoutProps } from "../../types";
 import { useFormLayout } from "../../model/useFormLayout";
 import { Spinner } from "@/shared/ui/spinner";
-import { GoogleButton } from "@/shared/ui/google-button/googleButton";
+import { GoogleButton } from "@/shared/ui/google-button/GoogleButton";
 import { authApi } from "@/entities/user";
+import { ROUTES } from "@/shared/router/constants";
 
 interface FormLayoutProps extends BaseFormLayoutProps {
   buttonTitle: string;
@@ -33,6 +34,7 @@ interface FormLayoutProps extends BaseFormLayoutProps {
     to: string;
     title: string;
   };
+  forgotPassword?: boolean;
 }
 
 export const FormLayout = ({
@@ -42,6 +44,7 @@ export const FormLayout = ({
   link,
   schema,
   sererValidationErrors,
+  forgotPassword,
 }: FormLayoutProps) => {
   const {
     form,
@@ -166,10 +169,22 @@ export const FormLayout = ({
             {isSubmitting ? <Spinner size={"small"} /> : buttonTitle}
           </Button>
         </form>
-        <Button variant={"link"} className="text-[#5a7ef5] block m-auto">
+        <Button
+          variant={"ghost"}
+          className="text-[#5a7ef5] block m-auto font-normal"
+        >
           <Link to={link.to}>{link.title}</Link>
         </Button>
         <GoogleButton onClick={authApi.authGoogle} />
+
+        {forgotPassword && (
+          <Button
+            variant={"link"}
+            className="text-[#5a7ef5] block m-auto font-normal mt-4"
+          >
+            <Link to={ROUTES.FORGOT_PASSWORD}>Забыл пароль?</Link>
+          </Button>
+        )}
       </Form>
     </div>
   );

@@ -13,6 +13,7 @@ export const SigninForm = () => {
       link={{ to: ROUTES.SIGNUP, title: "Sign up" }}
       schema={SigninFormSchema}
       sererValidationErrors={sererValidationErrors}
+      forgotPassword={true}
     />
   );
 };

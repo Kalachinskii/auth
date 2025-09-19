@@ -7,4 +7,5 @@ export const ROUTES = {
   SIGNOUT: RouteNames["Signout"],
   PROTECTED: RouteNames["Protected"],
   AUTH_GOOGLE: RouteNames["AuthGoogle"],
+  FORGOT_PASSWORD: RouteNames["ForgotPassword"],
 } as const;
