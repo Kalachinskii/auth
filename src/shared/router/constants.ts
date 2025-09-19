@@ -6,4 +6,5 @@ export const ROUTES = {
   SIGNIN: `/${RouteNames["Signin"]}`,
   SIGNUP: `/${RouteNames["Signup"]}`,
   FORGOT_PASSWORD: `/${RouteNames["ForgotPassword"]}`,
+  RESET_PASSWORD: `/${RouteNames["ResetPassword"]}`,
 } as const;

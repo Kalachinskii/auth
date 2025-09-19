@@ -9,6 +9,7 @@ import {
 import { AppLayout } from "./AppLayout";
 import { authApi } from "@/entities/user/api/auth";
 import { Home } from "@/pages/Home";
+import { ForgotPassword } from "@/pages/ForgotPassword";
 
 const router = createBrowserRouter([
   {
@@ -37,6 +38,10 @@ const router = createBrowserRouter([
   {
     path: ROUTES.SIGNUP,
     element: <Signup />,
+  },
+  {
+    path: ROUTES.FORGOT_PASSWORD,
+    element: <ForgotPassword />,
   },
 ]);
 

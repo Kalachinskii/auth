@@ -5,57 +5,55 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { BaseFormLayoutProps } from "../types";
 
 export const useFormLayout = ({
-    schema,
-    confirmField,
-    sererValidationErrors,
+  schema,
+  confirmField,
+  sererValidationErrors,
 }: BaseFormLayoutProps) => {
-    const form = useForm<z.infer<typeof schema>>({
-        resolver: zodResolver(schema),
-        mode: "onChange",
-        defaultValues: {
-            email: "",
-            password: "",
-            ...(confirmField ? { confirmPassword: "" } : {}),
-        },
-    });
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
+    mode: "onChange",
+    defaultValues: {
+      email: "",
+      password: "",
+      ...(confirmField ? { confirmPassword: "" } : {}),
+    },
+  });
 
-    const {
-        watch,
-        formState: { errors, isValid, isDirty, isSubmitting },
-    } = form;
+  const {
+    watch,
+    formState: { errors, isValid, isDirty, isSubmitting },
+  } = form;
 
-    const isPasswordValid = !errors.password && watch("password");
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const isPasswordValid = !errors.password && watch("password");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    useEffect(() => {
-        // при загрузке странице будет подчёркивать что поле не заполнено
-        // form.setError("email", { message: "ERROR" });
+  useEffect(() => {
+    // при загрузке странице будет подчёркивать что поле не заполнено
+    // form.setError("email", { message: "ERROR" });
 
-        // entries переводит {[],[],[]} в [[],[],[]]
-        if (sererValidationErrors) {
-            Object.entries(sererValidationErrors).forEach(
-                ([field, message]) => {
-                    // console.log(field);
-                    // console.log(message);
-                    form.setError(field as keyof z.infer<typeof schema>, {
-                        type: "server",
-                        message: message.join("\n"),
-                    });
-                }
-            );
-        }
-    }, [sererValidationErrors]);
+    // entries переводит {[],[],[]} в [[],[],[]]
+    if (sererValidationErrors) {
+      Object.entries(sererValidationErrors).forEach(([field, message]) => {
+        // console.log(field);
+        // console.log(message);
+        form.setError(field as keyof z.infer<typeof schema>, {
+          type: "server",
+          message: message.join("\n"),
+        });
+      });
+    }
+  }, [sererValidationErrors]);
 
-    return {
-        form,
-        showPassword,
-        setShowPassword,
-        isPasswordValid,
-        showConfirmPassword,
-        setShowConfirmPassword,
-        isValid,
-        isDirty,
-        isSubmitting,
-    };
+  return {
+    form,
+    showPassword,
+    setShowPassword,
+    isPasswordValid,
+    showConfirmPassword,
+    setShowConfirmPassword,
+    isValid,
+    isDirty,
+    isSubmitting,
+  };
 };

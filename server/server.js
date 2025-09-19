@@ -11,6 +11,7 @@ const prisma = new PrismaClient();
 
 import passport from "passport";
 import GoogleStrategy from "passport-google-oauth20";
+import nodemailer from "nodemailer";
 
 app.use(express.json());
 app.use(cookieParser());
@@ -24,6 +25,7 @@ const jwt_refresh_secret = process.env.JWT_REFRESH_SECRET;
 const tokens_expiration_time = {
   jwt_access_token_format: "1h",
   jwt_refresh_token_format: "7d",
+  jwt_refresh_reset_token_format: "10m",
   date_access_token_format: 60 * 60 * 1000,
   date_refresh_token_format: 7 * 24 * 60 * 60 * 1000,
 };
@@ -48,14 +50,18 @@ const passwordSchema = z
   .regex(/[a-z]/, "Password must contain small characters.")
   .regex(/[0-9]/, "Password must contain numeric characters.");
 
+const emailSchema = z
+  .string()
+  .email()
+  .min(
+    formSchemaConst.emailMin,
+    `Email must be at least ${formSchemaConst.emailMin} characters.`
+  );
+
+const EmailFormSchema = z.object({ email: emailSchema });
+
 const BaseFormSchema = z.object({
-  email: z
-    .string()
-    .email()
-    .min(
-      formSchemaConst.emailMin,
-      `Email must be at least ${formSchemaConst.emailMin} characters.`
-    ),
+  email: emailSchema,
   password: passwordSchema,
 });
 
@@ -483,5 +489,53 @@ app.get(
     session: false,
   })
 );
+
+const sendEmail = async (to, subject, body) => {};
+
+app.post("/api/forgot-password", async (req, resp) => {
+  // console.log("forgot-password: ", req.body);
+
+  // проверка пришедшой почты через zod
+  const res = EmailFormSchema.safeParse(req.body);
+
+  if (!res.success) {
+    return res.status(400).json({ error: result.error.flatten().fieldErrors });
+  }
+
+  // вытаскиваем почту
+  const { email } = result.data;
+
+  try {
+    // ищем уникального польльзователя по email
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      return resp.status(404).json({ error: "Пользователь не найден" });
+    }
+
+    const resetToken = jwt.sign(
+      { id: user.id, email: user.email },
+      jwt_secret,
+      {
+        expiresIn: tokens_expiration_time.jwt_refresh_reset_token_format,
+      }
+    );
+
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+    // функция отправки писем
+    await sendEmail(
+      email,
+      "Восстановление пароля",
+      `<p>Перейдите по ссылке, что бы збросить пароль: <a href="${resetLink}">Сбросить пароль</a></p>`
+    );
+
+    return resp
+      .status(200)
+      .json({ message: "Отправлена ссылка на востановление пароля" });
+  } catch (error) {
+    return resp.status(500).json({ error: "Ошибка сервера" });
+  }
+});
 
 app.listen(4000, () => console.log("Server started"));

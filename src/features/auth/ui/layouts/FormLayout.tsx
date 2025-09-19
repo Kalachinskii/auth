@@ -73,7 +73,7 @@ export const FormLayout = ({
             render={({ field }) => (
               <FormItem className="group">
                 <FormLabel className="text-zinc-500 group-focus-within:text-zinc-50">
-                  Login
+                  Email
                 </FormLabel>
                 <FormControl>
                   <div className="relative">

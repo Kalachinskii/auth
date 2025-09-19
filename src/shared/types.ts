@@ -6,4 +6,5 @@ export enum RouteNames {
   Protected = "protected",
   AuthGoogle = "auth-google",
   ForgotPassword = "forgot-password",
+  ResetPassword = "reset-password",
 }
