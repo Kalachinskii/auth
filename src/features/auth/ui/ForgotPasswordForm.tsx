@@ -13,7 +13,7 @@ import { Toaster } from "sonner";
 import { useFargotPassword } from "../model/useForgotPassword";
 
 export const ForgotPasswordForm = () => {
-  const { form, isValid, isDirty, isSubmitting, onSubmit } =
+  const { form, isValid, isDirty, isSubmitting, onSubmit, buttonDisabled } =
     useFargotPassword();
 
   return (
@@ -47,7 +47,7 @@ export const ForgotPasswordForm = () => {
           <Button
             className="w-full bg-[#2859FE] py-6 cursor-pointer hover:bg-[#1642d3]"
             type="submit"
-            disabled={!isDirty || !isValid || isSubmitting}
+            disabled={!isDirty || !isValid || isSubmitting || buttonDisabled}
           >
             {isSubmitting ? <Spinner size={"small"} /> : "Отправить"}
           </Button>
