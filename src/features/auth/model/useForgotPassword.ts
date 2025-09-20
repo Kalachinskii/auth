@@ -12,6 +12,7 @@ export const useFargotPassword = () => {
   type FormData = z.infer<typeof emailFormSchema>;
   const navigate = useNavigate();
   const [buttonDisabled, setButtonDisabled] = useState(false);
+
   const form = useForm<FormData>({
     resolver: zodResolver(emailFormSchema),
     mode: "onChange",
@@ -26,6 +27,8 @@ export const useFargotPassword = () => {
 
   const onSubmit = async (data: FormData) => {
     try {
+      if (!data.email) throw new Error("Не нашли почту");
+
       // отправляет на сервер введенную почту
       await authApi.forgotPassword(data);
       setButtonDisabled(true);

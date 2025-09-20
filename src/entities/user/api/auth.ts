@@ -22,4 +22,10 @@ export const authApi = {
   },
   forgotPassword: (data: { email: IUserPublic["email"] }) =>
     api.post<{ message: string }>(ROUTES.FORGOT_PASSWORD, data),
+  resetPassword: (data: {
+    password: IUserPrivate["password"];
+    token: string;
+  }) => {
+    api.post<{ message: string }>(ROUTES.RESET_PASSWORD, data);
+  },
 };

@@ -30,6 +30,8 @@ const emailSchema = z
 
 export const emailFormSchema = z.object({ email: emailSchema });
 
+export const passwordFormSchema = z.object({ password: passwordSchema });
+
 const BaseFormSchema = z.object({
   email: emailSchema,
   password: passwordSchema,

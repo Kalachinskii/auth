@@ -12,6 +12,7 @@ const prisma = new PrismaClient();
 import passport from "passport";
 import GoogleStrategy from "passport-google-oauth20";
 import nodemailer from "nodemailer";
+import { error } from "console";
 
 app.use(express.json());
 app.use(cookieParser());
@@ -57,6 +58,8 @@ const emailSchema = z
     formSchemaConst.emailMin,
     `Email must be at least ${formSchemaConst.emailMin} characters.`
   );
+
+const PasswordFormSchema = z.object({ passport: passwordSchema });
 
 const EmailFormSchema = z.object({ email: emailSchema });
 
@@ -565,6 +568,53 @@ app.post("/api/forgot-password", async (req, resp) => {
   } catch (error) {
     return resp.status(500).json({ error: "Ошибка сервера" });
   }
+});
+
+app.post("/api/reset-password", async (req, resp) => {
+  const res = PasswordFormSchema.safeParse(req.body);
+
+  if (!res.success) {
+    return resp.status(400).json({ error: result.error.flatten().fieldErrors });
+  }
+
+  const { newPassword, token } = req.body;
+
+  if (!token) {
+    return resp.status(401).json({ error: "Токен не найден" });
+  }
+
+  jwt.verify(token, jwt_secret, async (err, parsed_user) => {
+    if (err) {
+      returnresp.status(401).json({ error: "Неверный токен" });
+    }
+
+    try {
+      const user = await prisma.user.findUnique({
+        where: {
+          id: parsed_user.id,
+          email: parsed_user.email,
+        },
+      });
+
+      if (!user) {
+        returnresp.status(404).json({ error: "Не найден пользователь" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      await prisma.user.update({
+        where: {
+          id: user.id,
+          email: user.email,
+        },
+        data: { password: hashedPassword },
+      });
+
+      return resp.status(201).json({ message: "Пароль успешно обнавлён" });
+    } catch (error) {
+      return resp.status(500).json({ error: "Ошибка сервера" });
+    }
+  });
 });
 
 app.listen(4000, () => console.log("Server started"));
