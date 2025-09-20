@@ -490,7 +490,36 @@ app.get(
   })
 );
 
-const sendEmail = async (to, subject, body) => {};
+const sendEmail = async (to, subject, html) => {
+  const transporter = nodemailer.createTransport({
+    // имя сервера
+    host: process.env.SMTP_HOST,
+    // порт
+    port: process.env.SMTP_PORT,
+    // защишенное соеденение
+    secure: true,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+    },
+    // отключить проверка CLS сертификата
+    tls: {
+      rejectUnauthorized: false,
+    },
+  });
+
+  // отправка
+  transporter.sendMail({
+    // от кого
+    from: `Support <${process.env.SMTP_USER}>`,
+    // кому
+    to,
+    // тема письма
+    subject,
+    // содержимое
+    html,
+  });
+};
 
 app.post("/api/forgot-password", async (req, resp) => {
   // console.log("forgot-password: ", req.body);
@@ -503,13 +532,13 @@ app.post("/api/forgot-password", async (req, resp) => {
   }
 
   // вытаскиваем почту
-  const { email } = result.data;
+  const { email } = res.data;
 
   try {
     // ищем уникального польльзователя по email
     const user = await prisma.user.findUnique({ where: { email } });
 
-    if (!user) {
+    if (!user || user.googleId) {
       return resp.status(404).json({ error: "Пользователь не найден" });
     }
 
