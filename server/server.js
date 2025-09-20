@@ -531,7 +531,7 @@ app.post("/api/forgot-password", async (req, resp) => {
   const res = EmailFormSchema.safeParse(req.body);
 
   if (!res.success) {
-    return res.status(400).json({ error: result.error.flatten().fieldErrors });
+    return resp.status(400).json({ error: resp.error.flatten().fieldErrors });
   }
 
   // вытаскиваем почту
@@ -574,7 +574,7 @@ app.post("/api/reset-password", async (req, resp) => {
   const res = PasswordFormSchema.safeParse(req.body);
 
   if (!res.success) {
-    return resp.status(400).json({ error: result.error.flatten().fieldErrors });
+    return resp.status(400).json({ error: res.error.flatten().fieldErrors });
   }
 
   const { newPassword, token } = req.body;
@@ -585,7 +585,7 @@ app.post("/api/reset-password", async (req, resp) => {
 
   jwt.verify(token, jwt_secret, async (err, parsed_user) => {
     if (err) {
-      returnresp.status(401).json({ error: "Неверный токен" });
+      return resp.status(401).json({ error: "Неверный токен" });
     }
 
     try {
@@ -597,10 +597,10 @@ app.post("/api/reset-password", async (req, resp) => {
       });
 
       if (!user) {
-        returnresp.status(404).json({ error: "Не найден пользователь" });
+        return resp.status(404).json({ error: "Не найден пользователь" });
       }
 
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
 
       await prisma.user.update({
         where: {
