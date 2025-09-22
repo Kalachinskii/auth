@@ -339,7 +339,7 @@ app.get("/api/refresh-token", async (req, resp) => {
         },
       });
 
-      console.log(newRefreshToken);
+      // console.log(newRefreshToken);
 
       return resp
         .cookie("token", token, {
