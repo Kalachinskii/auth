@@ -175,7 +175,13 @@ export const FormLayout = ({
         >
           <Link to={link.to}>{link.title}</Link>
         </Button>
-        <GoogleButton onClick={authApi.authGoogle} />
+
+        {/* костылек для регистрации гугл кноппка не нужна */}
+        {buttonTitle == "Sign up" ? (
+          ""
+        ) : (
+          <GoogleButton onClick={authApi.authGoogle} />
+        )}
 
         {forgotPassword && (
           <Button
